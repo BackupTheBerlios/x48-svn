@@ -1,0 +1,112 @@
+/*
+ *  This file is part of x48, an emulator of the HP-48sx Calculator.
+ *  Copyright (C) 1994  Eddie C. Dost  (ecd@dressler.de)
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *
+ *  YOU SHOULD NOT NEED TO EDIT THIS FILE, EDIT config.h INSTEAD.
+ */
+
+#include "config.h"
+
+       TARFILES = README Imakefile config.h MANIFEST
+            TAR = tar
+            ZIP = zip
+       COMPRESS = gzip
+   COMPRESS_EXT = gz
+
+all:: readline/Makefile src/Makefile romdump/Makefile
+	cd readline ; $(MAKE) $@
+	cd src ; $(MAKE) $@
+	cd romdump ; $(MAKE) $@
+
+depend:: readline/Makefile src/Makefile
+	cd readline ; $(MAKE) $@
+	cd src ; $(MAKE) $@
+
+clean:: utils/Makefile readline/Makefile src/Makefile \
+	romdump/Makefile doc/Makefile
+	cd utils ; $(MAKE) $@
+	cd readline ; $(MAKE) $@
+	cd src ; $(MAKE) $@
+	cd romdump ; $(MAKE) $@
+	cd doc ; $(MAKE) $@
+
+install install.man:: all
+	cd src ; $(MAKE) $@
+
+Makefiles:: bin/Makefile utils/Makefile readline/Makefile \
+            src/Makefile romdump/Makefile doc/Makefile
+
+bin/Makefile: bin/Imakefile config.h
+	cd bin ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
+		-DCURDIR=$(CURRENT_DIR)/bin
+
+utils/Makefile: utils/Imakefile config.h
+	cd utils ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
+		-DCURDIR=$(CURRENT_DIR)/utils
+
+readline/Makefile: readline/Imakefile config.h
+	cd readline ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
+		-DCURDIR=$(CURRENT_DIR)/readline
+
+src/Makefile: src/Imakefile config.h
+	cd src ; $(IMAKE_CMD) -DTOPDIR=../$(TOP)
+		-DCURDIR=$(CURRENT_DIR)/src
+
+romdump/Makefile: romdump/Imakefile config.h
+	cd romdump ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
+		-DCURDIR=$(CURRENT_DIR)/romdump
+
+doc/Makefile: doc/Imakefile config.h
+	cd doc ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
+		-DCURDIR=$(CURRENT_DIR)/doc
+
+tar: bin/Makefile utils/Makefile readline/Makefile src/Makefile \
+     romdump/Makefile doc/Makefile
+	@NAME=x48-$(VERSION_MAJOR).$(VERSION_MINOR).$(PATCHLEVEL) ;         \
+  rm -f $$NAME ; ln -s . $$NAME ;                                           \
+  FILES= ;                                                                  \
+  for subdir in bin utils readline src romdump doc ; do                     \
+    cd $$subdir ;                                                           \
+    FILES="$$FILES `make echo_tarfiles                                      \
+      | grep -v '^make\['                                                   \
+      | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"                            \
+      ` ";                                                                  \
+    cd .. ; done ;                                                          \
+  echo creating tar file $${NAME}.tar.$(COMPRESS_EXT)... ;                  \
+  $(TAR) -vchf -                                                            \
+    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" `       \
+   | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;                           \
+  rm $$NAME
+
+zip: bin/Makefile utils/Makefile readline/Makefile src/Makefile \
+     romdump/Makefile doc/Makefile
+	@NAME=x48-$(VERSION_MAJOR).$(VERSION_MINOR).$(PATCHLEVEL) ;         \
+  rm -f $$NAME ; ln -s . $$NAME ;                                           \
+  FILES= ;                                                                  \
+  for subdir in bin utils readline src romdump doc ; do                     \
+    cd $$subdir ;                                                           \
+    FILES="$$FILES `make echo_tarfiles                                      \
+      | grep -v '^make\['                                                   \
+      | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"                            \
+      ` ";                                                                  \
+    cd .. ; done ;                                                          \
+  echo creating zip file $${NAME}.zip... ;                                  \
+  $(ZIP) $${NAME}.zip                                                       \
+    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" ` ;     \
+  rm $$NAME
+

@@ -1,0 +1,136 @@
+/*
+ *  This file is part of x48, an emulator of the HP-48sx Calculator.
+ *  Copyright (C) 1994  Eddie C. Dost  (ecd@dressler.de)
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *
+ *  YOU SHOULD NOT NEED TO EDIT THIS FILE, EDIT ../config.h INSTEAD.
+ */
+
+#include "../config.h"
+
+            BIN = $(TOP)/bin
+          UTILS = $(TOP)/utils
+       READLINE = $(TOP)/readline
+    READLINELIB = $(READLINE)/libreadline.a
+EXTRA_LIBRARIES =
+
+#ifdef HAVE_XSHM
+# define XSHM_DEF -DHAVE_XSHM
+#else
+# define XSHM_DEF
+#endif
+
+#ifdef HAVE_READLINE
+# define READLINE_DEF -DHAVE_READLINE
+       DEPLIBS1 = $(DEPLIBS) $(READLINELIB)
+        X48LIBS = $(XLIB) $(READLINELIB)
+#else
+# define READLINE_DEF
+       DEPLIBS1 = $(DEPLIBS)
+        X48LIBS = $(XLIB)
+#endif
+
+#ifndef UNIX_DEF
+# define UNIX_DEF
+#endif
+
+#ifdef CC_DEF
+             CC = CC_DEF
+#endif
+
+#ifdef CDEBUGFLAGS_DEF
+    CDEBUGFLAGS = CDEBUGFLAGS_DEF
+#endif
+
+#ifdef LDOPTIONS_DEF
+      LDOPTIONS = LDOPTIONS_DEF
+#endif
+
+        DEFINES = -I/usr/openwin/include UNIX_DEF XSHM_DEF READLINE_DEF
+           HDRS = annunc.h append.h buttons.h constants.h debugger.h \
+                  device.h disasm.h errors.h global.h hp.h hp48.h \
+                  hp48_emu.h hp48char.h icon.h mmu.h options.h resources.h \
+                  romio.h rpl.h small.h timer.h version.h x48_x11.h
+          TARS1 = actions.c debugger.c device.c disasm.c emulate.c \
+                  errors.c init.c lcd.c main.c memory.c options.c \
+                  register.c resources.c romio.c rpl.c serial.c timer.c \
+                  x48_x11.c 
+          SRCS1 = actions.c debugger.c device.c disasm.c emulate.c \
+                  errors.c init.c lcd.c main.c memory.c options.c \
+                  register.c resources.c romio.c rpl.c serial.c timer.c \
+                  version.c x48_x11.c 
+          OBJS1 = actions.o debugger.o device.o disasm.o emulate.o \
+                  errors.o init.o lcd.o main.o memory.o options.o \
+                  register.o resources.o romio.o rpl.o serial.o timer.o \
+                  version.o x48_x11.o 
+          SRCS2 = dump2rom.c
+          OBJS2 = dump2rom.o
+          SRCS3 = checkrom.c romio.c
+          OBJS3 = checkrom.o romio.o
+          SRCS4 = mkcard.c
+          OBJS4 = mkcard.o
+             CO = co -l
+       TARFILES = Imakefile X48.ad $(TARS1) $(SRCS2) $(SRCS3) $(SRCS4) $(HDRS)
+
+all:: $(BIN)/x48 $(BIN)/dump2rom $(BIN)/checkrom $(BIN)/mkcard
+
+       PROGRAMS = $(BIN)/x48 $(BIN)/dump2rom $(BIN)/checkrom $(BIN)/mkcard
+
+depend:: version.c X48.ad.h
+
+echo_tarfiles:
+	@echo $(TARFILES)
+
+#ifndef ComplexProgramTarget_4
+#define ComplexProgramTarget_4(program,locallib,syslib)                 @@\
+program: $(OBJS4) $(DEPLIBS4)                                           @@\
+	RemoveTargetProgram($@)                                         @@\
+	$(CC) -o $@ $(LDOPTIONS) $(OBJS4) locallib $(LDLIBS) syslib $(EXTRA_LOAD_FLAGS) @@\
+                                                                        @@\
+SaberProgramTarget(program,$(SRCS4),$(OBJS4),locallib,syslib)           @@\
+                                                                        @@\
+InstallProgram(program,$(BINDIR))                                       @@\
+InstallManPage(program,$(MANDIR))
+#endif /* ComplexProgramTarget_4 */
+
+ComplexProgramTarget_1($(BIN)/x48, $(X48LIBS),)
+ComplexProgramTarget_2($(BIN)/dump2rom,,)
+ComplexProgramTarget_3($(BIN)/checkrom,,)
+ComplexProgramTarget_4($(BIN)/mkcard,,)
+
+InstallAppDefaults(X48)
+
+x48_x11.o: X48.ad.h
+
+version.c: .version
+	@rm -f version.c
+	@echo "int   VERSION_MAJOR = $(VERSION_MAJOR);" >>version.c
+	@echo "int   VERSION_MINOR = $(VERSION_MINOR);" >>version.c
+	@echo "int   PATCHLEVEL = $(PATCHLEVEL);" >>version.c
+	@echo "int   COMPILE_VERSION = `cat .version`;" >>version.c
+	@echo "char *COMPILE_TIME = \"`date`\";" >>version.c
+	@echo "char *COMPILE_BY = \"`whoami`@`hostname`.`domainname`\";" \
+		>>version.c
+
+.version: $(TARS1)
+	$(UTILS)/makeversion
+
+X48.ad.h: X48.ad
+	$(UTILS)/ad2c X48.ad > X48.ad.h
+
+clean::
+	$(RM) version.c X48.ad.h
