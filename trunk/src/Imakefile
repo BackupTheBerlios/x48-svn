@@ -22,11 +22,10 @@
 
 #include "../config.h"
 
-            BIN = $(TOP)/bin
+            BIN = .
           UTILS = $(TOP)/utils
-       READLINE = $(TOP)/readline
-    READLINELIB = $(READLINE)/libreadline.a
-EXTRA_LIBRARIES =
+    READLINELIB = -lreadline
+EXTRA_LIBRARIES = -lutil
 
 #ifdef HAVE_XSHM
 # define XSHM_DEF -DHAVE_XSHM
@@ -95,22 +94,15 @@ depend:: version.c X48.ad.h
 echo_tarfiles:
 	@echo $(TARFILES)
 
-#ifndef ComplexProgramTarget_4
-#define ComplexProgramTarget_4(program,locallib,syslib)                 @@\
-program: $(OBJS4) $(DEPLIBS4)                                           @@\
-	RemoveTargetProgram($@)                                         @@\
-	$(CC) -o $@ $(LDOPTIONS) $(OBJS4) locallib $(LDLIBS) syslib $(EXTRA_LOAD_FLAGS) @@\
-                                                                        @@\
-SaberProgramTarget(program,$(SRCS4),$(OBJS4),locallib,syslib)           @@\
-                                                                        @@\
-InstallProgram(program,$(BINDIR))                                       @@\
-InstallManPage(program,$(MANDIR))
-#endif /* ComplexProgramTarget_4 */
+NormalProgramTarget($(BIN)/x48, $(OBJS1), /**/, $(X48LIBS), /**/)
+NormalProgramTarget($(BIN)/dump2rom, dump2rom.o, /**/, /**/, /**/ )
+NormalProgramTarget($(BIN)/checkrom, checkrom.o romio.o, /**/, /**/, /**/ )
+NormalProgramTarget($(BIN)/mkcard, mkcard.o, /**/, /**/, /**/ )
 
-ComplexProgramTarget_1($(BIN)/x48, $(X48LIBS),)
-ComplexProgramTarget_2($(BIN)/dump2rom,,)
-ComplexProgramTarget_3($(BIN)/checkrom,,)
-ComplexProgramTarget_4($(BIN)/mkcard,,)
+InstallProgram(x48,$(BINDIR))
+InstallProgram(dump2rom,$(BINDIR))
+InstallProgram(checkrom,$(BINDIR))
+InstallProgram(mkcard,$(BINDIR))
 
 InstallAppDefaults(X48)
 
