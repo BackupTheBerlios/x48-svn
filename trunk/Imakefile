@@ -28,19 +28,16 @@
        COMPRESS = gzip
    COMPRESS_EXT = gz
 
-all:: readline/Makefile src/Makefile romdump/Makefile
-	cd readline ; $(MAKE) $@
+all:: src/Makefile romdump/Makefile
 	cd src ; $(MAKE) $@
 	cd romdump ; $(MAKE) $@
 
-depend:: readline/Makefile src/Makefile
-	cd readline ; $(MAKE) $@
+depend:: src/Makefile
 	cd src ; $(MAKE) $@
 
-clean:: utils/Makefile readline/Makefile src/Makefile \
+clean:: utils/Makefile src/Makefile \
 	romdump/Makefile doc/Makefile
 	cd utils ; $(MAKE) $@
-	cd readline ; $(MAKE) $@
 	cd src ; $(MAKE) $@
 	cd romdump ; $(MAKE) $@
 	cd doc ; $(MAKE) $@
@@ -48,7 +45,7 @@ clean:: utils/Makefile readline/Makefile src/Makefile \
 install install.man:: all
 	cd src ; $(MAKE) $@
 
-Makefiles:: bin/Makefile utils/Makefile readline/Makefile \
+Makefiles:: bin/Makefile utils/Makefile \
             src/Makefile romdump/Makefile doc/Makefile
 
 bin/Makefile: bin/Imakefile config.h
@@ -58,10 +55,6 @@ bin/Makefile: bin/Imakefile config.h
 utils/Makefile: utils/Imakefile config.h
 	cd utils ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
 		-DCURDIR=$(CURRENT_DIR)/utils
-
-readline/Makefile: readline/Imakefile config.h
-	cd readline ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
-		-DCURDIR=$(CURRENT_DIR)/readline
 
 src/Makefile: src/Imakefile config.h
 	cd src ; $(IMAKE_CMD) -DTOPDIR=../$(TOP)
@@ -75,12 +68,12 @@ doc/Makefile: doc/Imakefile config.h
 	cd doc ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
 		-DCURDIR=$(CURRENT_DIR)/doc
 
-tar: bin/Makefile utils/Makefile readline/Makefile src/Makefile \
+tar: bin/Makefile utils/Makefile src/Makefile \
      romdump/Makefile doc/Makefile
 	@NAME=x48-$(VERSION_MAJOR).$(VERSION_MINOR).$(PATCHLEVEL) ;         \
   rm -f $$NAME ; ln -s . $$NAME ;                                           \
   FILES= ;                                                                  \
-  for subdir in bin utils readline src romdump doc ; do                     \
+  for subdir in utils src romdump doc ; do                     \
     cd $$subdir ;                                                           \
     FILES="$$FILES `make echo_tarfiles                                      \
       | grep -v '^make\['                                                   \
@@ -93,12 +86,12 @@ tar: bin/Makefile utils/Makefile readline/Makefile src/Makefile \
    | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;                           \
   rm $$NAME
 
-zip: bin/Makefile utils/Makefile readline/Makefile src/Makefile \
+zip: bin/Makefile utils/Makefile src/Makefile \
      romdump/Makefile doc/Makefile
 	@NAME=x48-$(VERSION_MAJOR).$(VERSION_MINOR).$(PATCHLEVEL) ;         \
   rm -f $$NAME ; ln -s . $$NAME ;                                           \
   FILES= ;                                                                  \
-  for subdir in bin utils readline src romdump doc ; do                     \
+  for subdir in utils src romdump doc ; do                     \
     cd $$subdir ;                                                           \
     FILES="$$FILES `make echo_tarfiles                                      \
       | grep -v '^make\['                                                   \
