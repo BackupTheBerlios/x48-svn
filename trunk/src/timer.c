@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include "timer.h"
 #include "debugger.h"
