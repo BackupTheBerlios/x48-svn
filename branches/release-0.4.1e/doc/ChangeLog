@@ -1,0 +1,389 @@
+1999/09/09      Version 0.4.1e          On the net
+
+Almost removed the text based debugger, for the GUI based one. If you
+still want the text based debugger, bring up the main menu, and press
+Quit/SAVE - this will open up the text based debugger. The way to Quit/Save
+is to kill x48 by clicking the close box on the main window.
+  - re-did the layout on all the menus/GUI (and before it is done, I
+       would guess to do it at least two more times)...
+  - Some buttons work, some don't. 
+  - Main Menu discription
+     - GO - CONT - doesn't do anything now
+     - GO - RESET - same as ON-C
+     - QUIT - SAVE - bring up text based debugger?
+     - QUIT - NO SAVE - Quit without saving
+     - DBG - DEBUG - bring up debugger window
+         o RPL - USER/SYS - toggle USER/SYSRPL debugging - not working
+         o ASM - HP/CLASS - toggle assembly syntax - working
+         o GO - CONT - Continue and free run - working
+         o GO - FINISH - Continue until RET - not working
+         o GO - RESET - abandon execution of thread - not working
+         o GO - STEP - step one line - working
+         o GO - OVER - step over - working
+         o GO - ->IN - go into subroutine - not working
+         o TERM - EXIT - not working
+         o TERM - QUIT - not working
+         o TRACE - STOP - first press - starts a trace file of instructions
+                        - second press - stops trace file
+                   - this file can get huge, fast = 5 seconds of execution
+                        makes about a 7Meg File...
+         o BRK - ADDRESS - asks for address to break on - works
+         o BRK - RANGE - asks for address range to break on - works
+         o BRK - REGISTER - asks for register (A,B,C,D,R0,R1,R2,R3,R4) and
+                    mask, and value - works
+         o BRK - INSTR - break on instruction - doesn't work
+         o BRK - RPL - break on RPLkeyword - doesn't work
+         o BRK - CLEAR - Clear Breakpoints - doesn't work
+         o BRK - NOW - stop execution
+     - LOOK - OBJECT - poke around the file system
+         - there is a bug in this menu - first press of a button displays
+           it, second time makes it go away - make sure it is blank before
+           changing from one to the other, unless you like random core files..
+         - if you are poking around in a program, and click on a RPLkeyword, 
+           it will add a breakpoint there.
+         o LOOK - HOME - works
+         o LOOK - STACK - nope
+         o LOOK - PORT0 - works
+         o LOOK - PORT1 - nope
+         o LOOK - PORT2 - nope
+         o SEND - nope
+         o RECEIVE - yep - but only places things on the stack.
+         o BREAK - nope
+     - LOOK - RAM - RAM window
+         - 1, 10, 100, 1000, 10000 - Move up or down
+         - Home - Goto the beginning of the home directory
+         - A, B, C, D, D0, D1 - goto the mem location pointed to by the
+            lower 5 nibbles of the register. (button 1)
+                              - follow the register around during execution
+                                     (button2)
+         - Prolog - shows prologs - works
+         - the rest dont
+     - LOOK - REGISTERS - look at registers
+         - All registers can be looked at, and this window updates during
+           exection. SET does not work yet.
+     - LOOK - STACK - look at stack
+         - ADDRESS - show address
+         - TYPE - show type
+         - MORE/LESS - default is one line per item, more gives more, less
+            gives less... 
+
+
+     I am open to how things should work. - feedback appriecated.
+
+1999/07/13      Version 0.4.1a-c        On the net
+
+If the emulator gets messed up, or crashes, enter the debugger
+by typing CTRL-C in the shell you started x48. At the prompt type
+`reset`, confirm with `y`. Then type `cont`.
+
+If this does not help, enter the debugger again, and type
+`exit`, confirm with `y`.  This will NOT save the stuff, so the next
+time you use x48, it should be in the same state as on the last run.
+  - Changed the way that keypressed are taken for the following keys:
+      - left arrow, right arrow, up arrow, down arrow & CLR key
+        this allows you to do one key stroke & the cursor doesn't
+        zip accross the screen without slowing down the entire
+        emulator.
+
+  - Implmented the following additions to the debugger:
+     - break 
+        [addr_low addr_high]  Set breakpoint range, from low to high,
+        [sysRPL_keyword]      Set breakpoint at System RPL keyword .
+     - dis [addr] [addr n]    Disassemble starting at PC or addr, n times.
+     - diso [addr]            Disassemble object at addr.
+     - diss [addr]            Dissassemble secondary at addr.
+     - find addr prolog       Search for prolog starting at addr.
+                                prolog is a 5 nibble hex number.
+     - list [addr] [n]        List data starting at addr, n times .
+     - lib [addr]             Disassemble Library at addr.
+       lib [lib_num]          Disassembly Libary n.
+     - lcd /path              Change local working directory for next two 
+                                commands:
+     - receive file           Receive file into HP48.
+       receive *              Receive all HP files in lcd
+     - send var               Send file to HardDrive
+       send addr file
+       send var file
+     - ls [addr]              list directory contents.
+     - mode [BINARY | ASCII]  Send in BINARY or ASCII
+     - ram                    added some features to RAM layout
+     - trace [n]              step & display n steps
+     - step [n]               step & don't display n steps
+
+Added requirements for the following files in the ~/.hp48/ directory
+  supported.o    <-supported entry points
+  unsupported.o  <- unsuppored entry  points that are good for both the GX&SX
+  sxonly.o       <- SX only unsupported entry points
+  gxonly.o       <- GX only unsupported entry points
+
+  supported.a ; unsupported.a are provided in the x48-0.4.1/entries directory
+  of this tar file. Need to finish up sxonly.a & gxonly.a
+
+lib is the start of the Library debugger: it gives:
+x48-debug> lib 1224
+7ACE5 -> 7D4F5 : Library         Library 1224:  POLY  : 4.5sx \169C...
+hash = 7D2BA
+mesg = 7AD4B
+link = 7D1E8
+  00  ROOTS : 7ADF2 -> 7AFBF : Program         :: CK1&Dispatch FOUR :: ...
+  01  PDIV : 7AFC6 -> 7B0E7 : Program         :: CK2&Dispatch SIXTYEIG...
+  02  PMULT : 7B0EE -> 7B1D2 : Program         :: CK2&Dispatch SIXTYEIG...
+  03  PADD : 7B1D9 -> 7B262 : Program         :: CK2&Dispatch SIXTYEIG...
+  04  PEVAL : 7B269 -> 7B2F3 : Program         :: CK2 OVER TYPEARRY? OV...
+  05  PDER : 7B2FA -> 7B344 : Program         :: CK1&Dispatch FOUR :: ...
+  06  PF : 7B34B -> 7B60F : Program         :: CK2&Dispatch SIXTYFOU...
+  07  R\->P : 7B616 -> 7B655 : Program         :: CK1&Dispatch FIVE :: ...
+  08  PFACT : 7B65C -> 7B70A : Program         :: CK1&Dispatch FOUR :: ...
+  09  RDER : 7B711 -> 7B823 : Program         :: CK2&Dispatch SIXTYEIG...
+  10  ALG\-> : 7B82A -> 7B9DB : Program         :: CK3&Dispatch # 961 ::...
+  11  \->AP : 7B9E2 -> 7BAB7 : Program         :: CK1&Dispatch FOUR :: ...
+  12   : 7BABE -> 7BAFA : Program         :: DUP ARSIZE DUPUNROT #...
+  13  FL\->A : 7BB01 -> 7BB25 : Program         :: XLIB 1224 33 UNCOERCE...
+  14  FL\->L : 7BB2C -> 7BB46 : Program         :: XLIB 1224 33 {}N ; 
+  15  FLDIV : 7BB4D -> 7BC7A : Program         :: XLIB 1224 34 2DUP #1-...
+  16  FLMUL : 7BC81 -> 7BDE8 : Program         :: XLIB 1224 34 2DUP #< ...
+  17  FLADD : 7BDEF -> 7BE95 : Program         :: XLIB 1224 34 2DUP #< ...
+  18  FLPF : 7BE9C -> 7C14F : Program         :: DUP BEGIN DUP CARCOMP...
+  19  R\->FL : 7C156 -> 7C234 : Program         :: DUPLENCOMP DUP#0= cas...
+  20  FLRDER : 7C23B -> 7C30C : Program         :: DUPDUP FLMUL OVER XLI...
+  21  FLFACT : 7C313 -> 7C4D2 : Program         :: DUPLENCOMP DUPTWO #<c...
+  22  MULEL : 7C4D9 -> 7C529 : Program         :: INNERDUP #2+ ROLLSWAP...
+  23  DIVEL : 7C530 -> 7C580 : Program         :: INNERDUP #2+ ROLLSWAP...
+  24  STRIP0 : 7C587 -> 7C5E1 : Program         :: DUP CARCOMP PTR 37DA1...
+  25   : 7C5E1 -> 7C71D : Code 306        Code
+  26   : 7C71D -> 7C8AB : Program         :: DUPLENCOMP TWO #=case...
+  27   : 7C8AB -> 7CC98 : Program         :: DUPDUP INNERCOMP ONE_...
+  28   : 7CC98 -> 7CD19 : Program         :: DUP CARCOMP SWAP DIVE...
+  29   : 7CD19 -> 7CD7B : Program         :: FOUR TestUserFlag ?SE...
+  30   : 7CD7B -> 7CDD7 : Program         :: DUP SEVENTEEN XLIB 12...
+  31   : 7CDD7 -> 7CE4F : Program         :: DUPLENCOMP ONE #> NOT...
+  32   : 7CE4F -> 7CE7F : Program         :: {}N L &COMP ' L STOLA...
+  33   : 7CE7F -> 7CEB6 : Program         :: DUPLENCOMP DUPUNROT #...
+  34   : 7CEB6 -> 7CED4 : Program         :: OVER LENCOMP OVER LEN...
+  35   : 7CED4 -> 7CF10 : Code 50         Code
+  36   : 7CF10 -> 7D13F : Code 549        Code
+  37   : 7D13F -> 7D185 : Program         :: DUPNULL{}? caseSIZEER...
+  38   : 7D185 -> 7D1A7 : Code 24         Code
+  39   : 7D1A7 -> 7D1E8 : Program         :: NULL{} ' L ONE DOBIND...
+  40   : 7FD08 -> 7FD0D : PTR             E802E
+  41   : 7D4F1 -> 7D4F6 : PTR             00325
+Conf = 7AD32
+  7AD32 -> 7AD4B : Program         :: # 4C8 TOSRRP ; 
+7AD32
+
+The hope is that soon I will be able to send the Library in ASCII mode, and
+x48 will create the .s file that I can put into the gtools. This also should
+make it easier to move things to the HP49 when it comes out....
+
+the start of my SysRPL debugger: is diss, it gives:
+x48-debug> diss 7CD7B
+ 7CD7B->7CD80 : Start #01      :     ::
+ 7CD80->7CD85 : Primitive Code : 7  DUP
+ 7CD85->7CD8A : Binary Integer : 7  SEVENTEEN
+ 7CD8A->7CD95 : XLIB 1224 035  :    XLIB 1224 35
+ 7CD95->7CD9A : Primitive Code : 7  DUP
+ 7CD9A->7CD9F : Primitive Code : 7  3PICK
+ 7CD9F->7CDA4 : Primitive Code : 7  %%-
+ 7CDA4->7CDA9 : Primitive Code : 7  %%ABS
+ 7CDA9->7CDC3 : Long Real      :    .00001
+ 7CDC3->7CDC8 : Primitive Code : 7  %%>
+ 7CDC8->7CDCD : Primitive Code : 7  ITE_DROP
+ 7CDCD->7CDD2 : Primitive Code : 7  SWAPDROP
+ 7CDD2->7CDD7 : End of #01     :     ;
+
+The 7 means it is a supported entry point for the sx & gx. if it is a 
+6, it is an unsupported entry point for the sx & gx (common to both).
+if it is a 4 or a 2 is is a unsupported for either the sx or gx. (but not
+both);
+
+**********************************************************************
+1995/01/16	Version 0.4.0		On the net
+
+	- Implemented CONFIG/UNCNFG more exactly.
+
+	- Added support for different RAM or ROM cards.
+
+	- Added G/GX support (lost of changes)
+	  new colors, new labels, ...
+
+	- Rewrote ROMDump for both S/SX and G/GX. Lots faster now.
+	  Thanks go to Robert Tiismus <robert@Sneezy.net.ut.ee>
+
+	- Corrected handling of Display and Menu images, fixed number
+	  of lines in init_display(), to avoid XShmError on virgin
+	  startup
+
+	- Catch SIGPIPE and save state, so everything is saved, when
+	  x48 gets terminated by xkill or the window manager
+
+
+**********************************************************************
+
+1994/12/07	Version 0.3.5		On the net
+
+	- Serial and terminal lines now have the baudrate set
+	  correctly.
+
+	  . Watch out for the IR (serial) connection: speed is
+            always set to 2400 Baud by the HP
+	  . On the wire (terminal) connection speed is set to the
+	    selected value
+
+	- Removed stupid rounding in adjtime routine
+
+	  . This caused missing of some part of a second when
+	    adjusting the time on the HP
+
+	- Suppress adjusting timer2 if this would cause an
+	  increase of the timer, slow down the timer instead.
+
+	  . Thanks go to Lutz Vieweg (he spotted this bug, while
+            trying to use QED. (lkv@mania.robin.de)
+
+	- Support for contrast control (ON_+, ON_-) added
+
+
+	- Started command line parsing... (see below)
+
+	Changes to the X11 Interface
+	----------------------------
+
+	- Implemented color-icon. Show state of HP48 in icon:
+
+	  . if 'x48' is displayed, calculator is on.
+	  . if 'x48' is blinking, calculator is transfering data.
+
+	- Implemented use of the WM_SAVE_YOURSELF protocol.
+
+	- x48 now uses Xrm...() functions to parse and use
+	  Xresources and the command line.
+
+	- Better handling of ButtonPresses and KeyPresses
+
+	- The program now sets the WM_COMMAND property
+
+	- Now colors look well on monochrome and gray
+
+	- A new Colormap is allocated if the standard Colormap is full
+
+	- All possible visuals are supported by the color allocation
+	  modell (at least on Linux, I don't really know how to handle
+          DirectColor ...)
+
+
+**********************************************************************
+
+1994/11/02	Version 0.3.4		On the net
+
+	- Real time support mostly works (uses system time)
+
+	- Stores ROM, RAM, and Ports in 'compressed' format
+
+	- tty lines work on HPUX
+		Thanks go to Lutz Vieweg (lkv@mania.robin.de)
+
+	- debugger now works on operating systems, where timers interrupt
+	  the read system call. 
+
+	- Debugger now uses Class instruction set
+
+	- Disassembler completed (at least hope so)
+
+
+**********************************************************************
+
+1994/10/06	Version 0.3.3		On the net
+
+
+	- checkrom, a program to test the ROM CRC included
+
+	- tty lines work on IRIX
+		Thanks go to !!!LOOK AT THE MAIL!!!
+
+	- faster X11 interface
+		Uses Pixmaps now to update changed nibbles.
+		Whenever possible uses XSHM Extension to update
+		the display.
+
+	- Start of debugger implementation
+
+	- Disassembler started (HP & Alonzo)
+
+	- SHUTDN bug fixed (didn't wake on received chars)
+		Thanks go to Lutz Vieweg (lkv@mania.robin.de)
+
+	- Display bit offset implemented
+		
+
+**********************************************************************
+
+1994/10/02	Version 0.3.2		not published
+
+	- Major speed improvement due to scheduling of emulator
+	  specific events (timers, adjtime, receive, ...)
+		This *really* speeds up the main emulator loop.
+
+
+**********************************************************************
+
+1994/09/30	Version 0.3.1		not published
+
+	- Added MAGIC number to ~/.hp48/hp48 file
+
+	- Minor optimizations
+
+
+**********************************************************************
+
+1994/09/18	Second Release		(Version 0.2)
+
+	- Pure X11 interface
+
+	- Start of real time support
+
+	- SHUTDN implemented
+
+	- Keyboard support
+
+	- Compiles better (less warnings) on SunOS, Solaris
+
+
+**********************************************************************
+
+1994/08/26	Initial Release		(Version 0.1)
+
+	- Emulates the HP48sx fairly
+
+	- Compiles well only on Linux
+
+	- Uses XView Panel and Canvas
+
+	- Must be started in source directory
+
+	- No SHUTDN
+
+	- No real time
+
+	- Misses HP48 keyboard interrupts
+
+	- Slow
+
+
+**********************************************************************
+
+1994/07		Look at em48 by Paul Fox
+
+	- Starts to run like a HP48
+
+
+**********************************************************************
+
+1994/05		First Versions
+
+	- No Display at all, merely debugging output
+
+
+**********************************************************************
+
+1994/04		Fed up with stupid Desktop Calculators
+
