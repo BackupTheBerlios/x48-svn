@@ -130,8 +130,7 @@ char **argv;
 {
   FILE *dump;
   long addr, size;
-  char ch;
-  int i, gx, error;
+  int ch, i, gx, error;
 
   if (argc < 2) {
     fprintf(stderr, "usage: %s hp48-dump-file\n", argv[0]);
