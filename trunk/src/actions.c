@@ -95,7 +95,6 @@ static int	interrupt_called = 0;
 extern long	nibble_masks[16];
 
 int		got_alarm;
-int		first_press = 1;
 
 int		conf_bank1 = 0x00000;
 int		conf_bank2 = 0x00000;
@@ -121,19 +120,6 @@ do_in()
 #ifdef DEBUG_INOUT
   fprintf(stderr, "saturn.OUT=%.3x, saturn.IN=%.4x\n", out, in);
 #endif
-
-  if ( saturn.PC == 0x00E31 && !first_press &&
-       ( (out & 0x10 && in & 0x1 ) ||             /* keys are Backspace */
-         (out & 0x40 && in & 0x7 ) ||             /* right, left & down */
-         (out & 0x80 && in & 0x2 ) ) )            /* up arrows          */
-  {
-    for (i = 0; i < 9; i++)
-      if (out & (1 << i))
-        saturn.keybuf.rows[i] = 0;
-    first_press = 1;
-  }
-  else
-    first_press = 0;
 
   for (i = 0; i < 4; i++) {
     saturn.IN[i] = in & 0xf;
