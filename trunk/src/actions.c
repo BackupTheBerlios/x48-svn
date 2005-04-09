@@ -633,6 +633,7 @@ do_shutdown()
         saturn.timer2 = ticks.t2_ticks;
       }
       saturn.timer1 = set_t1 - ticks.t1_ticks;
+      set_t1 = ticks.t1_ticks;
 
       interrupt_called = 0;
       if (GetEvent()) {
