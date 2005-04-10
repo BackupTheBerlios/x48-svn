@@ -92,6 +92,7 @@ extern long  port1_mask;
 extern short port2_is_ram;
 extern long  port2_mask;
 
+#define DEBUG_UNKNOWN 1
 /* #define DEBUG_SERIAL 1 */
 /* #define DEBUG_SERIALb 1 */
 /* #define DEBUG_DISPLAY 1 */

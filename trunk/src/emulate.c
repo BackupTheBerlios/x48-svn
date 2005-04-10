@@ -55,9 +55,11 @@
 #include "x48_x11.h"
 #include "debugger.h"
 
-/* #define DEBUG_TIMER 1 */
-/* #define DEBUG_SCHED 1 */
-/* #define DEBUG_DISP_SCHED 1 */
+#if 0
+#define DEBUG_TIMER
+#define DEBUG_SCHED
+#define DEBUG_DISP_SCHED
+#endif
 
 static long	jumpaddr;
 
@@ -120,7 +122,6 @@ decode_group_80()
   int t, op3, op4, op5, op6;
   unsigned char *REG;
   long addr;
-
   op3 = read_nibble(saturn.PC + 2);
   switch (op3) {
     case 0:	/* OUT=CS */
@@ -703,7 +704,6 @@ int op1;
   int op2, op3, op4, op5, op6;
 
   op2 = read_nibble(saturn.PC + 1);
-
   switch (op1) {
     case 8:
       switch (op2) {
@@ -1976,7 +1976,6 @@ step_instruction()
   jumpaddr = 0;
 
   op0 = read_nibble(saturn.PC);
-
   switch (op0) {
     case 0:
       op1 = read_nibble(saturn.PC + 1);
@@ -2261,7 +2260,7 @@ schedule()
       if (device.display_touched < 0) device.display_touched = 1;
 #ifdef DEBUG_DISP_SCHED
       fprintf(stderr, "check_device: disp_when %d, disp_touched %d\n",
-              device.disp_when, device.display_touched);
+              sched_display, device.display_touched);
 #endif
     }
     check_devices();
@@ -2427,6 +2426,11 @@ emulate(void)
 emulate()
 #endif
 {
+  struct timeval  tv;
+  struct timeval  tv2;
+#ifndef SOLARIS
+  struct timezone tz;
+#endif
 
   reset_timer(T1_TIMER);
   reset_timer(RUN_TIMER);
@@ -2443,14 +2447,25 @@ emulate()
   set_t1 = saturn.timer1;
 
   do {
-
     step_instruction();
+
+#ifdef SOLARIS
+    gettimeofday(&tv);
+#else
+    gettimeofday(&tv, &tz);
+#endif
+    while ((tv.tv_sec == tv2.tv_sec) && ((tv.tv_usec - tv2.tv_usec) < 2)) {
+	gettimeofday(&tv, &tz);
+    }
+    tv2.tv_usec = tv.tv_usec;
+    tv2.tv_sec = tv.tv_sec;
+
+/* We need to trottle the speed here. */
 
     if (schedule_event-- == 0)
       {
         schedule();
       }
-
   } while (!enter_debugger);
 
   return 0;

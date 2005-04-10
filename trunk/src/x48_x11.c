@@ -150,11 +150,14 @@ int	 does_backing_store;
 int	 color_mode;
 int	 icon_color_mode;
 
-/* #define DEBUG_XEVENT 1 */
-/* #define DEBUG_BUTTONS 1 */
-/* #define DEBUG_FOCUS 1 */
-/* #define DEBUG_BACKING_STORE 1 */
-/* #define DEBUG_SHM 1 */
+#define DEBUG_FOCUS 1
+#if 0
+# define DEBUG_XEVENT 1
+# define DEBUG_BUTTONS 1
+# define DEBUG_FOCUS 1
+# define DEBUG_BACKING_STORE 1
+# define DEBUG_SHM 1
+#endif
 
 typedef struct keypad_t {
   unsigned int	width;
@@ -3544,6 +3547,7 @@ int     buflen;
       break;
     case XK_KP_Add:
     case XK_plus:
+    case XK_equal:
       key_event(BUTTON_PLUS, xev);
       wake = 1;
       break;
@@ -3604,6 +3608,8 @@ int     buflen;
       break;
     case XK_Alt_L:
     case XK_Alt_R:
+    case XK_Meta_L:
+    case XK_Meta_R:
       key_event(BUTTON_ALPHA, xev);
       wake = 1;
       break;
@@ -3749,6 +3755,7 @@ GetEvent()
 
   if (release_pending)
     {
+fprintf(stderr, "Release\n");
       i = XLookupString(&release_event, buf, bufs, &sym, NULL);
       wake = decode_key((XEvent *)&release_event, sym, buf, i);
       release_pending = 0;
@@ -3822,7 +3829,7 @@ GetEvent()
 
       case ButtonPress:
 
-        if (xev.xbutton.button == Button1 || xev.xbutton.button == Button2) {
+        if (xev.xbutton.button == Button1 || xev.xbutton.button == Button3) {
 	  for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
 	    if (xev.xbutton.subwindow == buttons[i].xwin) {
               buttons[i].key_down = 1;
@@ -3832,7 +3839,12 @@ GetEvent()
               break;
             }
 	  }
-        }
+        } else
+        if (xev.xbutton.button == Button2) {
+	    int x;
+	    char *paste = XFetchBytes(dpy, &x);
+fprintf(stderr, "Paste: %s (%d)\n", paste, x);
+	}
 	break;
 
       case ButtonRelease:
@@ -3917,6 +3929,9 @@ GetEvent()
 #ifdef DEBUG_XEVENT
         printf("Event: %d\n", xev.type);
 #endif
+      case KeymapNotify:
+      case ConfigureNotify:
+      case ReparentNotify:
         break;
 
     }

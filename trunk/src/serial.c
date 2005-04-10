@@ -69,15 +69,15 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/time.h>
-#if defined(LINUX) || defined(HPUX)
-#include <sys/ioctl.h>
+#if defined(HPUX) || defined(CSRG_BASED)
+#  include <sys/ioctl.h>
 #endif
 #include <unistd.h>
 #include <termios.h>
 #ifdef SOLARIS
-#include <sys/stream.h>
-#include <sys/stropts.h>
-#include <sys/termios.h>
+#  include <sys/stream.h>
+#  include <sys/stropts.h>
+#  include <sys/termios.h>
 #endif
 
 #include "hp48.h"
@@ -137,7 +137,7 @@ serial_init()
   ttyp = -1;
   if (useTerminal)
     {
-#ifdef IRIX
+#if defined(IRIX)
       if ((p = _getpty(&wire_fd, O_RDWR | O_EXCL | O_NDELAY, 0666, 0)) == NULL)
         {
           wire_fd = -1;
@@ -158,8 +158,7 @@ serial_init()
               wire_name = strdup(p);
             }
         }
-#else  /* IRIX */
-#ifdef SOLARIS
+#elseif defined(SOLARIS)
       if ((wire_fd = open("/dev/ptmx", O_RDWR | O_NONBLOCK, 0666)) >= 0)
         {
           grantpt(wire_fd);
@@ -176,8 +175,7 @@ serial_init()
               wire_name = strdup(tty_dev_name);
             }
         }
-#else  /* SOLARIS */
-#ifdef LINUX
+#elseif defined(LINUX)
       c = 'p';
       do
         {
@@ -199,7 +197,7 @@ serial_init()
           c++;
         }
       while ((wire_fd < 0) && (errno != ENOENT));
-#else  /* LINUX */
+#else
       /*
        * Here we go for SUNOS, HPUX
        */
@@ -231,14 +229,12 @@ serial_init()
           c++;
         }
       while ((wire_fd < 0) && (errno != ENOENT));
-#endif /* LINUX */
-#endif /* SOLARIS */
-#endif /* IRIX */
+#endif
     }
 
   if (ttyp >= 0)
     {
-#if defined(SUNOS) || defined(HPUX)
+#if defined(TCSANOW)
       if (tcgetattr(ttyp, &ttybuf) < 0)
 #else
       if (ioctl(ttyp, TCGETS, (char *)&ttybuf) < 0)
@@ -263,7 +259,7 @@ serial_init()
 
   if (ttyp >= 0)
     {
-#if defined(SUNOS) || defined (HPUX)
+#if defined(TCSANOW)
       if (tcsetattr(ttyp, TCSANOW, &ttybuf) < 0)
 #else
       if (ioctl(ttyp, TCSETS, (char *)&ttybuf) < 0)
@@ -291,7 +287,7 @@ serial_init()
 
   if (ir_fd >= 0)
     {
-#if defined(SUNOS) || defined (HPUX)
+#if defined(TCSANOW)
       if (tcgetattr(ir_fd, &ttybuf) < 0)
 #else
       if (ioctl(ir_fd, TCGETS, (char *)&ttybuf) < 0)
@@ -315,7 +311,7 @@ serial_init()
 
   if (ir_fd >= 0)
     {
-#if defined(SUNOS) || defined(HPUX)
+#if defined(TCSANOW)
       if (tcsetattr(ir_fd, TCSANOW, &ttybuf) < 0)
 #else
       if (ioctl(ir_fd, TCSETS, (char *)&ttybuf) < 0)
@@ -344,7 +340,7 @@ int baud;
 
   if (ir_fd >= 0)
     {
-#if defined(SUNOS) || defined (HPUX)
+#if defined(TCSANOW)
       if (tcgetattr(ir_fd, &ttybuf) < 0)
 #else
       if (ioctl(ir_fd, TCGETS, (char *)&ttybuf) < 0)
@@ -358,6 +354,51 @@ int baud;
         }
     }
 
+#if defined(__APPLE__)
+  baud &= 0x7;
+  switch (baud)
+    {
+      case 0:	/* 1200 */
+        ttybuf.c_cflag |= B1200;
+        break;
+      case 1:	/* 1920 */
+#  ifdef B1920
+        ttybuf.c_cflag |= B1920;
+#  endif
+        break;
+      case 2:	/* 2400 */
+        ttybuf.c_cflag |= B2400;
+        break;
+      case 3:	/* 3840 */
+#  ifdef B3840
+        ttybuf.c_cflag |= B3840;
+#  endif
+        break;
+      case 4:	/* 4800 */
+        ttybuf.c_cflag |= B4800;
+        break;
+      case 5:	/* 7680 */
+#  ifdef B7680
+        ttybuf.c_cflag |= B7680;
+#  endif
+        break;
+      case 6:	/* 9600 */
+        ttybuf.c_cflag |= B9600;
+        break;
+      case 7:	/* 15360 */
+#  ifdef B15360
+        ttybuf.c_cflag |= B15360;
+#  endif
+        break;
+    }
+
+  if ((ir_fd >= 0) && ((ttybuf.c_ospeed) == 0))
+    {
+      if (!quiet)
+        fprintf(stderr, "%s: can\'t set baud rate, using 9600\n", progname);
+      ttybuf.c_cflag |= B9600;
+    }
+#else
   ttybuf.c_cflag &= ~CBAUD;
 
   baud &= 0x7;
@@ -367,33 +408,33 @@ int baud;
         ttybuf.c_cflag |= B1200;
         break;
       case 1:	/* 1920 */
-#ifdef B1920
+#  ifdef B1920
         ttybuf.c_cflag |= B1920;
-#endif
+#  endif
         break;
       case 2:	/* 2400 */
         ttybuf.c_cflag |= B2400;
         break;
       case 3:	/* 3840 */
-#ifdef B3840
+#  ifdef B3840
         ttybuf.c_cflag |= B3840;
-#endif
+#  endif
         break;
       case 4:	/* 4800 */
         ttybuf.c_cflag |= B4800;
         break;
       case 5:	/* 7680 */
-#ifdef B7680
+#  ifdef B7680
         ttybuf.c_cflag |= B7680;
-#endif
+#  endif
         break;
       case 6:	/* 9600 */
         ttybuf.c_cflag |= B9600;
         break;
       case 7:	/* 15360 */
-#ifdef B15360
+#  ifdef B15360
         ttybuf.c_cflag |= B15360;
-#endif
+#  endif
         break;
     }
 
@@ -403,10 +444,10 @@ int baud;
         fprintf(stderr, "%s: can\'t set baud rate, using 9600\n", progname);
       ttybuf.c_cflag |= B9600;
     }
-
+#endif
   if (ir_fd >= 0)
     {
-#if defined(SUNOS) || defined(HPUX)
+#if defined(TCSANOW)
       if (tcsetattr(ir_fd, TCSANOW, &ttybuf) < 0)
 #else
       if (ioctl(ir_fd, TCSETS, (char *)&ttybuf) < 0)
@@ -422,7 +463,7 @@ int baud;
 
   if (ttyp >= 0)
     {
-#if defined(SUNOS) || defined(HPUX)
+#if defined(TCSANOW)
       if (tcgetattr(ttyp, &ttybuf) < 0)
 #else
       if (ioctl(ttyp, TCGETS, (char *)&ttybuf) < 0)
@@ -437,6 +478,8 @@ int baud;
         }
     }
 
+#if defined(__APPLE__)
+#else
   ttybuf.c_cflag &= ~CBAUD;
 
   baud &= 0x7;
@@ -446,33 +489,33 @@ int baud;
         ttybuf.c_cflag |= B1200;
         break;
       case 1:	/* 1920 */
-#ifdef B1920
+#  ifdef B1920
         ttybuf.c_cflag |= B1920;
-#endif
+#  endif
         break;
       case 2:	/* 2400 */
         ttybuf.c_cflag |= B2400;
         break;
       case 3:	/* 3840 */
-#ifdef B3840
+#  ifdef B3840
         ttybuf.c_cflag |= B3840;
-#endif
+#  endif
         break;
       case 4:	/* 4800 */
         ttybuf.c_cflag |= B4800;
         break;
       case 5:	/* 7680 */
-#ifdef B7680
+#  ifdef B7680
         ttybuf.c_cflag |= B7680;
-#endif
+#  endif
         break;
       case 6:	/* 9600 */
         ttybuf.c_cflag |= B9600;
         break;
       case 7:	/* 15360 */
-#ifdef B15360
+#  ifdef B15360
         ttybuf.c_cflag |= B15360;
-#endif
+#  endif
         break;
     }
 
@@ -482,10 +525,10 @@ int baud;
         fprintf(stderr, "%s: can\'t set baud rate, using 9600\n", progname);
       ttybuf.c_cflag |= B9600;
     }
-
+#endif
   if (ttyp >= 0)
     {
-#if defined(SUNOS) || defined(HPUX)
+#if defined(TCSANOW)
       if (tcsetattr(ttyp, TCSANOW, &ttybuf) < 0)
 #else
       if (ioctl(ttyp, TCSETS, (char *)&ttybuf) < 0)
