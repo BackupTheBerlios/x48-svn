@@ -22,7 +22,8 @@
 
 #include "config.h"
 
-       TARFILES = README Imakefile config.h MANIFEST
+       TARFILES = README Imakefile config.h MANIFEST ChangeLog \
+                  x48.spec rpm/x48.spec.in debian/\*
             TAR = tar
             ZIP = zip
        COMPRESS = gzip
@@ -45,12 +46,11 @@ clean:: utils/Makefile src/Makefile \
 install install.man:: all
 	cd src ; $(MAKE) $@
 
-Makefiles:: bin/Makefile utils/Makefile \
-            src/Makefile romdump/Makefile doc/Makefile
+x48.spec : rpm/x48.spec.in
+	sed -e 's/@VERSION@/$(VERSION_MAJOR).$(VERSION_MINOR).$(PATCHLEVEL)/' $< > $@
 
-bin/Makefile: bin/Imakefile config.h
-	cd bin ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
-		-DCURDIR=$(CURRENT_DIR)/bin
+Makefiles:: utils/Makefile \
+            src/Makefile romdump/Makefile doc/Makefile
 
 utils/Makefile: utils/Imakefile config.h
 	cd utils ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
@@ -68,12 +68,11 @@ doc/Makefile: doc/Imakefile config.h
 	cd doc ; $(IMAKE_CMD) -DTOPDIR=../$(TOP) \
 		-DCURDIR=$(CURRENT_DIR)/doc
 
-tar: bin/Makefile utils/Makefile src/Makefile \
-     romdump/Makefile doc/Makefile
+tar: utils/Makefile src/Makefile romdump/Makefile doc/Makefile x48.spec
 	@NAME=x48-$(VERSION_MAJOR).$(VERSION_MINOR).$(PATCHLEVEL) ;         \
   rm -f $$NAME ; ln -s . $$NAME ;                                           \
-  FILES= ;                                                                  \
-  for subdir in utils src romdump doc ; do                     \
+  FILES=;                                                                   \
+  for subdir in utils src romdump doc ; do                                  \
     cd $$subdir ;                                                           \
     FILES="$$FILES `make echo_tarfiles                                      \
       | grep -v '^make\['                                                   \
@@ -86,12 +85,11 @@ tar: bin/Makefile utils/Makefile src/Makefile \
    | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;                           \
   rm $$NAME
 
-zip: bin/Makefile utils/Makefile src/Makefile \
-     romdump/Makefile doc/Makefile
+zip: utils/Makefile src/Makefile romdump/Makefile doc/Makefile
 	@NAME=x48-$(VERSION_MAJOR).$(VERSION_MINOR).$(PATCHLEVEL) ;         \
   rm -f $$NAME ; ln -s . $$NAME ;                                           \
   FILES= ;                                                                  \
-  for subdir in utils src romdump doc ; do                     \
+  for subdir in utils src romdump doc ; do                                  \
     cd $$subdir ;                                                           \
     FILES="$$FILES `make echo_tarfiles                                      \
       | grep -v '^make\['                                                   \
