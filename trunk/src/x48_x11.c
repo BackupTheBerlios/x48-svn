@@ -3755,7 +3755,6 @@ GetEvent()
 
   if (release_pending)
     {
-fprintf(stderr, "Release\n");
       i = XLookupString(&release_event, buf, bufs, &sym, NULL);
       wake = decode_key((XEvent *)&release_event, sym, buf, i);
       release_pending = 0;
@@ -3843,7 +3842,6 @@ fprintf(stderr, "Release\n");
         if (xev.xbutton.button == Button2) {
 	    int x;
 	    char *paste = XFetchBytes(dpy, &x);
-fprintf(stderr, "Paste: %s (%d)\n", paste, x);
 	}
 	break;
 
