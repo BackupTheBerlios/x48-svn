@@ -29,11 +29,16 @@
 /*
  * Which OS are you on?
  */
-/* #define UNIX_DEF -DLINUX */
+#if defined(LinuxArchitecture)
+#define UNIX_DEF -DLINUX
 /* #define UNIX_DEF -DSOLARIS */
 /* #define UNIX_DEF -DSUNOS */
 /* #define UNIX_DEF -DIRIX */
-/* #define UNIX_DEF -DHPUX */
+#elif  defined(HPArchitecture)
+# define UNIX_DEF -DHPUX
+#elif  defined(DarwinArchitecture)
+# define UNIX_DEF -DAPPLE
+#endif
 
 /*
  * If you have class (hp48 assembler), uncomment the following line
@@ -54,14 +59,12 @@
 #define HAVE_READLINE
 
 /*
- * Which Compiler to use:
- */
-#define CC_DEF gcc
-
-/*
  * Which Optimization Flags:
  */
-#define CDEBUGFLAGS_DEF -O6 -Wall
+#if defined(linux)
+   CDEBUGFLAGS_DEF = -O6 -Wall
+//#  define CDEBUGFLAGS_DEF -O6 -Wall
+#endif
 
 /*
  * Which Flags to pass to the Linker:
@@ -77,5 +80,5 @@
 
   VERSION_MAJOR = 0
   VERSION_MINOR = 4
-     PATCHLEVEL = 0
+     PATCHLEVEL = 2
 
