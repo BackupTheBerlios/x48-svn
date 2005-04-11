@@ -1,0 +1,13 @@
+x48 (0.4.2-1) unstable; urgency=low
+
+  * Cursor Flashing
+  * Auto repeat on movement and del keys.
+
+ -- G. Allen Morris III <gam3@gam3.org>  Sar,  9 Apr 2005 14:54:21 -0500
+
+x48 (0.4.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- G. Allen Morris III <gam3@gam3.org>  Wed,  5 Jan 2005 14:54:21 -0500
+

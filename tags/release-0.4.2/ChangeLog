@@ -1,0 +1,12 @@
+2005-03-20 "G. Allen Morris III" <gam3@gam3.net>
+	* added equal key for + and Meta Keys for Alpha
+	* applied a different fix for the arrow repeat key bug 
+	* fixed a bug in the timer one logic.  The cursor now flashes on input.
+
+2005-03-20 "G. Allen Morris III" <gam3@gam3.net>
+	* added patch [000390] time.h compile bug
+	* added patch [000391] Arrow key repeat patch
+	* added ChangeLog file
+
+2005-03-18 "G. Allen Morris III" <gam3@gam3.net>
+        * starting from x48 0.4.0.
