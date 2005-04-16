@@ -260,7 +260,7 @@ typedef struct button_t {
 
   char		*name;
   short		pressed;
-  short		key_down;
+  short		extra;
 
   int		code;
   int		x, y;
@@ -3094,11 +3094,10 @@ char *ir;
 
 int
 #ifdef __FunctionProto__
-button_pressed(int b, XEvent *xev)
+button_pressed(int b)
 #else
-button_pressed(b, xev)
+button_pressed(b)
 int     b;
-XEvent *xev;
 #endif
 {
   int code;
@@ -3117,6 +3116,9 @@ XEvent *xev;
       if (saturn.kbd_ien) {
         do_kbd_int();
       }
+      if ((saturn.keybuf.rows[r] & c)) {
+fprintf(stderr, "bug\n");
+      }
       saturn.keybuf.rows[r] |= c;
     }
   }
@@ -3129,42 +3131,72 @@ XEvent *xev;
 
 int
 #ifdef __FunctionProto__
-button_released(int b, XEvent *xev)
+button_released(int b)
 #else
-button_released(b, xev)
-int b;
-XEvent *xev;
+button_released(b)
+int     b;
 #endif
 {
   int code;
-  int i, r, c;
-  int all_up;
 
   code = buttons[b].code;
-  all_up = 1;
-  for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
-    if (buttons[i].pressed) {
-      if (buttons[i].key_down) {
-        all_up = 0;
-      } else {
-        buttons[i].pressed = 0;
-        DrawButton(i);
+  buttons[b].pressed = 0;
+  if (code == 0x8000) {
+    int i;
+    for (i = 0; i < 9; i++)
+      saturn.keybuf.rows[i] &= ~0x8000;
+  } else {
+    int r, c;
+    r = code >> 4;
+    c = 1 << (code & 0xf);
+    saturn.keybuf.rows[r] &= ~c;
+  }
+#ifdef DEBUG_BUTTONS
+  fprintf(stderr, "Button pressed  %d (%s)\n",
+          buttons[b].code, buttons[b].name);
+#endif
+  return 0;
+}
+
+static
+int
+#ifdef __FunctionProto__
+button_release_all(void)
+#else
+button_release_all()
+#endif
+{
+  int code;
+  int b;
+
+#ifdef DEBUG_BUTTONS
+  fprintf(stderr, "Buttons released ");
+#endif
+  for (b = BUTTON_A; b <= LAST_BUTTON; b++)
+    {
+      if (buttons[b].pressed)
+        {
+#ifdef DEBUG_BUTTONS
+  fprintf(stderr, "%d (%s) ",
+          buttons[b].code, buttons[b].name);
+#endif
+	code = buttons[b].code;
         if (code == 0x8000) {
+	  int i;
           for (i = 0; i < 9; i++)
             saturn.keybuf.rows[i] &= ~0x8000;
         } else {
+	  int r, c;
           r = code >> 4;
           c = 1 << (code & 0xf);
           saturn.keybuf.rows[r] &= ~c;
         }
+        buttons[b].pressed = 0;
+        DrawButton(b);
       }
     }
-  }
-  if (all_up)
-    memset(&saturn.keybuf, 0, sizeof(saturn.keybuf));
 #ifdef DEBUG_BUTTONS
-  fprintf(stderr, "Button released %d (%s)\n",
-          buttons[b].code, buttons[b].name);
+  fprintf(stderr, "\n");
 #endif
   return 0;
 }
@@ -3184,7 +3216,6 @@ XEvent *xev;
 
   code = buttons[b].code;
   if (xev->type == KeyPress) {
-    buttons[b].key_down = 1;
     buttons[b].pressed = 1;
     DrawButton(b);
     if (code == 0x8000) {
@@ -3206,33 +3237,22 @@ XEvent *xev;
             buttons[b].code, buttons[b].name);
 #endif
   } else {
-    buttons[b].key_down = 0;
-    all_up = 1;
-    for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
-      if (buttons[i].pressed) {
-        if (buttons[i].key_down) {
-          all_up = 0;
-        } else {
-          buttons[i].pressed = 0;
-          DrawButton(i);
           if (code == 0x8000) {
             for (i = 0; i < 9; i++)
               saturn.keybuf.rows[i] &= ~0x8000;
+	    memset (&saturn.keybuf, 0, sizeof (saturn.keybuf));
           } else {
             r = code >> 4;
             c = 1 << (code & 0xf);
             saturn.keybuf.rows[r] &= ~c;
           }
-        }
-      }
-    }
-    if (all_up)
-      memset(&saturn.keybuf, 0, sizeof(saturn.keybuf));
+          buttons[b].pressed = 0;
+          DrawButton(b);
+  }
 #ifdef DEBUG_BUTTONS
     fprintf(stderr, "Button released %d (%s)\n",
             buttons[b].code, buttons[b].name);
 #endif
-  }
   return 0;
 }
 
@@ -3789,31 +3809,31 @@ GetEvent()
 
       case Expose:
 
-        button_expose = 0;
-        for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
-          if (xev.xexpose.window == buttons[i].xwin) {
-            DrawButton(i);
-            button_expose = 1;
-            break;
-          }
-        }
-        if (!button_expose) {
-          if (xev.xexpose.window == disp.win) {
-            DrawDisp();
-            button_expose = 1;
-          }
-        }
-        if (!button_expose) {
-          if (xev.xexpose.window == iconW) {
-            DrawIcon();
-            button_expose = 1;
-          }
-        }
-        if (!button_expose) {
-          DrawKeypad();
-        }
-	break;
-
+	if (xev.xexpose.count == 0)
+	  {
+	    if (xev.xexpose.window == disp.win) 
+	      {
+		DrawDisp();
+	      }
+	    else if (xev.xexpose.window == iconW) 
+	      {
+		DrawIcon();
+	      }
+	    else if (xev.xexpose.window == mainW)
+	      {
+		DrawKeypad();
+	      }
+	    else
+	      for (i = BUTTON_A; i <= LAST_BUTTON; i++)
+	        {
+		  if (xev.xexpose.window == buttons[i].xwin)
+		    {
+		      DrawButton(i);
+		      break;
+		    }
+	        }
+	  }
+        break;
       case UnmapNotify:
 
         disp.mapped = 0;
@@ -3821,43 +3841,49 @@ GetEvent()
 
       case MapNotify:
 
-        disp.mapped = 1;
-        update_display();
-        redraw_annunc();
+	if (!disp.mapped)
+	  {
+	    disp.mapped = 1;
+	    update_display();
+	    redraw_annunc();
+	  }
         break;
 
       case ButtonPress:
 
-        if (xev.xbutton.button == Button1 || xev.xbutton.button == Button3) {
-	  for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
-	    if (xev.xbutton.subwindow == buttons[i].xwin) {
-              buttons[i].key_down = 1;
-	      button_pressed(i, &xev);
-              wake = 1;
-              DrawButton(i);
-              break;
-            }
+        if (xev.xbutton.button == Button1 || xev.xbutton.button == Button3)
+	  {
+	    for (i = BUTTON_A; i <= LAST_BUTTON; i++) 
+	      {
+		if (xev.xbutton.subwindow == buttons[i].xwin) 
+		  {
+		    if (buttons[i].pressed) {
+			if (xev.xbutton.button == Button3) {
+			    button_released(i);
+			    DrawButton(i);
+			}
+		    } else {
+			button_pressed(i);
+			wake = 1;
+			DrawButton(i);
+		    }
+		    break;
+		  }
+	      }
 	  }
-        } else
-        if (xev.xbutton.button == Button2) {
+	else if (xev.xbutton.button == Button2) 
+	  {
 	    int x;
 	    char *paste = XFetchBytes(dpy, &x);
-	}
+	  }
 	break;
 
       case ButtonRelease:
 
-	for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
-	  if (xev.xbutton.subwindow == buttons[i].xwin) {
-            buttons[i].key_down = 0;
-            if (xev.xbutton.button == Button1) {
-	      button_released(i, &xev);
-              wake = 1;
-              DrawButton(i);
-              break;
-            }
+	if (xev.xbutton.button == Button1)
+	  {
+	      button_release_all();
 	  }
-        }
 	break;
 
       case MappingNotify:
@@ -3875,30 +3901,8 @@ GetEvent()
         break;
 
       case EnterNotify:
-
-        if ((xev.xcrossing.state & Button1Mask) != 0) {
-          if (xev.xcrossing.mode == NotifyNormal) {
-	    if (button_leave >= 0) {
-              buttons[button_leave].key_down = 0;
-              button_released(button_leave, &xev);
-              wake = 1;
-              DrawButton(button_leave);
-	      button_leave = -1;
-            }
-          }
-        }
-        break;
-
       case LeaveNotify:
 
-        if ((xev.xcrossing.state & Button1Mask) != 0) {
-          for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
-	    if (xev.xcrossing.window == buttons[i].xwin) {
-	      button_leave = i;
-              break;
-            }
-          }
-	}
         break;
 
       case ClientMessage:
