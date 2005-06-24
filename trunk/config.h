@@ -30,10 +30,11 @@
  * Which OS are you on?
  */
 #if defined(LinuxArchitecture)
-#define UNIX_DEF -DLINUX
-/* #define UNIX_DEF -DSOLARIS */
-/* #define UNIX_DEF -DSUNOS */
-/* #define UNIX_DEF -DIRIX */
+# define UNIX_DEF -DLINUX
+#elif  defined(SunArchitecture)
+# define UNIX_DEF -DSOLARIS
+#elif  defined(SGIArchitecture)
+# define UNIX_DEF -DIRIX
 #elif  defined(HPArchitecture)
 # define UNIX_DEF -DHPUX
 #elif  defined(DarwinArchitecture)
@@ -56,7 +57,7 @@
  *
  * (you should not have to do this ...)
  */
-#define HAVE_READLINE
+/* #define HAVE_READLINE */
 
 /*
  * Which Optimization Flags:
@@ -80,5 +81,6 @@
 
   VERSION_MAJOR = 0
   VERSION_MINOR = 4
-     PATCHLEVEL = 2
+     PATCHLEVEL = 3
 
+#define HAVE_READLINE
