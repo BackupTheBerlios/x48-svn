@@ -124,11 +124,8 @@ serial_init(void)
 serial_init()
 #endif
 {
-#if defined(SOLARIS) || defined (IRIX)
   char *p;
-#else
   int   c;
-#endif
   int   n;
   char  tty_dev_name[128];
   struct termios ttybuf;
@@ -158,7 +155,7 @@ serial_init()
               wire_name = strdup(p);
             }
         }
-#elseif defined(SOLARIS)
+#elif defined(SOLARIS)
       if ((wire_fd = open("/dev/ptmx", O_RDWR | O_NONBLOCK, 0666)) >= 0)
         {
           grantpt(wire_fd);
@@ -175,28 +172,47 @@ serial_init()
               wire_name = strdup(tty_dev_name);
             }
         }
-#elseif defined(LINUX)
-      c = 'p';
-      do
+#elif defined(LINUX)
+      /* Unix98 PTY (Preferred) */
+      if ((wire_fd = open("/dev/ptmx", O_RDWR | O_NONBLOCK, 0666)) >= 0)
         {
-          for (n = 0; n < 16; n++)
+          grantpt(wire_fd);
+          unlockpt(wire_fd);
+          p = ptsname(wire_fd);
+          strcpy(tty_dev_name, p);
+          if ((ttyp = open(tty_dev_name, O_RDWR | O_NDELAY, 0666)) >= 0)
             {
-              sprintf(tty_dev_name, "/dev/pty%c%x", c, n);
-              if ((wire_fd = open(tty_dev_name,
-                                  O_RDWR | O_EXCL | O_NDELAY, 0666)) >= 0)
-                {
-                  ttyp = wire_fd;
-                  sprintf(tty_dev_name, "/dev/tty%c%x", c, n);
-                  if (verbose)
-                    printf("%s: wire connection on %s\n", progname,
-                           tty_dev_name);
-                  wire_name = strdup(tty_dev_name);
-                  break;
-                }
+              if (verbose)
+                printf("%s: wire connection on %s\n", progname,
+                      tty_dev_name);
+              wire_name = strdup(tty_dev_name);
             }
-          c++;
         }
-      while ((wire_fd < 0) && (errno != ENOENT));
+      /* BSD PTY (Legacy) */
+      else
+	{
+          c = 'p';
+          do
+            {
+              for (n = 0; n < 16; n++)
+                {
+                  sprintf(tty_dev_name, "/dev/pty%c%x", c, n);
+                  if ((wire_fd = open(tty_dev_name,
+                                      O_RDWR | O_EXCL | O_NDELAY, 0666)) >= 0)
+                    {
+                      ttyp = wire_fd;
+                      sprintf(tty_dev_name, "/dev/tty%c%x", c, n);
+                      if (verbose)
+                        printf("%s: wire connection on %s\n", progname,
+                               tty_dev_name);
+                      wire_name = strdup(tty_dev_name);
+                      break;
+                    }
+                }
+              c++;
+            }
+          while ((wire_fd < 0) && (errno != ENOENT));
+	}
 #else
       /*
        * Here we go for SUNOS, HPUX
