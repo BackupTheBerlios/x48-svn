@@ -174,7 +174,7 @@ word_64 *r2;
 /*
  * Set ACCESSTIME: (on startup)
  *
- * 1. TICKS = 8092 * gettimeofday()  (UNIX System Time)
+ * 1. TICKS = 8192 * gettimeofday()  (UNIX System Time)
  * 2. TICKS += unix_0_time           (TICKS for 1.1.1970, 0:00)
  * 3. TICKS += set_0_time            (Time adjustment from User)
  * 4. TICKS += saturn.timer2         (Timer 2 from last run)
@@ -210,7 +210,9 @@ set_accesstime()
   (void)time(&gmt);
   ltm = localtime(&gmt);
 #ifdef SYSV_TIME
-  systime_offset = timezone;
+  if( daylight )
+    systime_offset = -3600;
+  systime_offset += timezone;
 #else
   systime_offset = -ltm->tm_gmtoff;
 #endif
@@ -556,7 +558,7 @@ int timer;
 /*
  * Calculate TIMER 2 Ticks:
  *
- * 1. TICKS = 8092 * gettimeofday()  (UNIX System Time)
+ * 1. TICKS = 8192 * gettimeofday()  (UNIX System Time)
  * 2. TICKS += unix_0_time           (TICKS for 1.1.1970, 0:00)
  * 3. TICKS += set_0_time            (Time adjustment from User)
  * 4. Get value of ACCESSTIME
