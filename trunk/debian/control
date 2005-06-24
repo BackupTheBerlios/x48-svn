@@ -1,7 +1,7 @@
 Source: x48
 Section: x11
 Priority: optional
-Maintainer: G. Allen Morris III <gam3@gam3.org>
+Maintainer: G. Allen Morris III <gam3@gam3.net>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.6.1
 
