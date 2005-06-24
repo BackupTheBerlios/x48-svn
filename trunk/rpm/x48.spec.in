@@ -1,3 +1,4 @@
+%define x11_prefix      /usr/X11R6
 Name:      	x48
 Summary:   	x48 is an HP 48 GX emulator
 Version:   	@VERSION@
@@ -23,11 +24,20 @@ make
 
 %install
 make DESTDIR=$RPM_BUILD_ROOT install
+make DESTDIR=$RPM_BUILD_ROOT install.man
+
+mkdir ${RPM_BUILD_ROOT}/usr/share/doc/x48-${VERSION}
+
+%clean
+rm -rf $RPM_BUILD_ROOT 
 
 %files
-/etc/X11/app-defaults/X48
-/usr/X11R6/bin/x48
-/usr/X11R6/bin/dump2rom
-/usr/X11R6/bin/checkrom
-/usr/X11R6/bin/mkcard
+%doc	README
+	%{x11_prefix}/bin/x48
+	%{x11_prefix}/bin/dump2rom
+	%{x11_prefix}/bin/checkrom
+	%{x11_prefix}/bin/mkcard
+	%{x11_prefix}/man/*
+	/etc/X11/app-defaults/X48
+
 
