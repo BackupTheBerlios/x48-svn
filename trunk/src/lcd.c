@@ -516,6 +516,7 @@ draw_annunc()
   int i;
 
   val = display.annunc;
+
   if (val == last_annunc_state)
     return;
   last_annunc_state = val;

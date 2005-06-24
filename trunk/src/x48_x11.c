@@ -1290,7 +1290,7 @@ CreateButtons()
   unsigned long pixel;
 
   f_small = get_font_resource(dpy, "smallLabelFont", "SmallLabelFont");
-  f_med = get_font_resource(dpy, "mediumLabelFont", "mediumLabelFont");
+  f_med = get_font_resource(dpy, "mediumLabelFont", "MediumLabelFont");
   f_big = get_font_resource(dpy, "largeLabelFont", "LargeLabelFont");
 
   for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
@@ -2469,11 +2469,11 @@ refresh_icon()
 {
   int icon_state;
 
-  icon_state = ((display.on && !((ANN_IO & display.annunc) == ANN_IO))
-               || (display.on && !((ANN_IO & display.annunc) == ANN_IO)));
-
+  icon_state = ((display.on && !((ANN_IO & display.annunc) == ANN_IO)) ||
+	        (display.on && !((ANN_ALPHA & display.annunc) == ANN_ALPHA)));
   if (icon_state == last_icon_state)
     return;
+
   last_icon_state = icon_state;
   XSetFillStyle(dpy, gc, FillStippled);
   if (icon_state)

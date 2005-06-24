@@ -52,6 +52,7 @@ static XrmOptionDescRec options[] = {
   { "-display",     ".display",       XrmoptionSepArg,   (void *)      0 },
   { "-geometry",    "*geometry",      XrmoptionSepArg,   (void *)      0 },
   { "-iconGeom",    "*iconGeom",      XrmoptionSepArg,   (void *)      0 },
+  { "-iconName",    "*iconName",      XrmoptionSepArg,   (void *)      0 },
   { "-iconic",      "*iconic",        XrmoptionNoArg,    (void *) "True" },
   { "-name",        (char *) 0,       XrmoptionSepArg,   (void *)      0 },
   { "-title",       "*title",         XrmoptionSepArg,   (void *)      0 },

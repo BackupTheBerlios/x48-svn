@@ -86,6 +86,11 @@ int *size;
     {
       *size = 2 * st.st_size;
     }
+  else if (four[0])
+    {
+      printf("%d\n", st.st_size);
+      *size = st.st_size;
+    }
   else
     {
       fprintf(stderr, "%s is not a HP48 ROM\n", name);
@@ -182,6 +187,11 @@ int *size;
       if (*size == ROM_SIZE_GX)
         {
           opt_gx = 1;
+        }
+      else
+      if (*size != ROM_SIZE_GX)
+        {
+          opt_gx = 2;
         }
       else
         {

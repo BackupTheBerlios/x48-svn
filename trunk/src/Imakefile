@@ -25,7 +25,7 @@
             TOP = ..
             BIN = .
           UTILS = $(TOP)/utils
-    READLINELIB = -lreadline
+    READLINELIB = -lreadline TermcapLibrary
 EXTRA_LIBRARIES =
 
 #ifdef HAVE_XSHM
@@ -83,11 +83,14 @@ EXTRA_LIBRARIES =
            OBJS = $(OBJS1) $(OBJS2) $(OBJS3) $(OBJS4)
        PROGRAMS = ProgramTargetName(xterm) ProgramTargetName(dump2rom) \
                   ProgramTargetName(checkrom) ProgramTargetName(mkcard)
-       TARFILES = Imakefile X48.ad $(TARS1) $(SRCS2) $(SRCS3) $(SRCS4) $(HDRS)
+       TARFILES = Imakefile X48.ad $(TARS1) $(SRCS2) $(SRCS3) $(SRCS4) $(HDRS) x48.man
 
 all:: $(BIN)/x48 $(BIN)/dump2rom $(BIN)/checkrom $(BIN)/mkcard
 
        PROGRAMS = $(BIN)/x48 $(BIN)/dump2rom $(BIN)/checkrom $(BIN)/mkcard
+
+files::
+	@echo $(BIN)/x48 $(BIN)/dump2rom $(BIN)/checkrom $(BIN)/mkcard
 
 depend:: version.c X48.ad.h
 
@@ -105,6 +108,8 @@ InstallProgram(checkrom,$(BINDIR))
 InstallProgram(mkcard,$(BINDIR))
 
 InstallAppDefaults(X48)
+
+InstallManPage(x48,$(MANDIR))
 
 DependTarget()
 
