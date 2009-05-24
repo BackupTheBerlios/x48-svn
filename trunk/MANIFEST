@@ -46,6 +46,7 @@ src/rpl.h
 src/small.h
 src/timer.h
 src/version.h
+src/x48.man
 src/x48_x11.h
 romdump/Imakefile
 romdump/ROMDump

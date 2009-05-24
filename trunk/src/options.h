@@ -88,8 +88,8 @@ static XrmOptionDescRec options[] = {
   { "-rom",         "*romFileName",   XrmoptionSepArg,   (void *)      0 },
   { "-home",        "*homeDirectory", XrmoptionSepArg,   (void *)      0 },
 
-  { "-debug",       "*useDebugger",   XrmoptionNoArg,    (void *) "True" },
-  { "+debug",       "*useDebugger",   XrmoptionNoArg,    (void *)"False" },
+  { "-debug",       "*useDebugger",   XrmoptionNoArg,    (void *)"False" },
+  { "+debug",       "*useDebugger",   XrmoptionNoArg,    (void *) "True" },
   { "-disasm",      "*disassemblerMnemonics",XrmoptionSepArg,(void *)  0 },
 
   { "-xrm",         (char *) 0,       XrmoptionResArg,   (void *)      0 },

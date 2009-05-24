@@ -43,6 +43,8 @@
 #ifndef _GLOBAL_H
 #define _GLOBAL_H 1
 
+#include "config.h"
+
 #ifdef __ProtoType__
 #undef __ProtoType__
 #endif

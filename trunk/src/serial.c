@@ -178,8 +178,10 @@ serial_init()
         {
           grantpt(wire_fd);
           unlockpt(wire_fd);
-          p = ptsname(wire_fd);
-          strcpy(tty_dev_name, p);
+          if (ptsname_r(wire_fd, tty_dev_name, 128)) {
+	      perror("Could not get the name of the wire device.");
+	      exit(-1);
+	  }
           if ((ttyp = open(tty_dev_name, O_RDWR | O_NDELAY, 0666)) >= 0)
             {
               if (verbose)

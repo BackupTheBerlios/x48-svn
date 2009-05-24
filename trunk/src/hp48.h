@@ -127,7 +127,7 @@ typedef struct display_t {
 } display_t;
 
 typedef struct mem_cntl_t {
-  short unconfigured;
+  unsigned short unconfigured;
   word_20 config[2];
 } mem_cntl_t;
 

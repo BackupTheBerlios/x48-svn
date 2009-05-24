@@ -71,6 +71,9 @@
 #include "hp48.h"
 #include "debugger.h"
 
+#include <langinfo.h>
+#include <locale.h>
+
 char  *progname;
 char  *res_name;
 char  *res_class;
@@ -150,6 +153,11 @@ char **argv;
   struct sigaction sa;
   long flags;
   struct itimerval it;
+
+setlocale(LC_CTYPE, "");
+printf("%s\n", setlocale(LC_ALL, NULL));
+printf("%s\n", setlocale(LC_ALL, "en_US.utf8"));
+printf("%s\n", nl_langinfo(CODESET));
 
   name = (char *)0;
   /*

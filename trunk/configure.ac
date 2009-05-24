@@ -1,0 +1,118 @@
+
+AC_INIT([x48],[0.6.0],[x48-bugs@gam3.net])
+AC_COPYRIGHT([Copyright (c) 2006 G. Allen Morris III])
+AC_CANONICAL_TARGET
+
+AC_PREREQ(2.59)
+
+AC_CONFIG_SRCDIR([config.h.in])
+AC_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_CPP
+
+AC_PATH_X
+AC_PATH_XTRA
+
+# ********* readline library
+AC_ARG_ENABLE(readline,
+  [  --disable-readline      disable readline support],
+  [ if test x"$enableval" = xyes; then
+    with_readline="yes, check"
+  else
+    with_readline="no"
+    problem_readline=": Explicitly disabled"
+  fi ],
+  [ with_readline="not specified, check" ]
+)
+
+AH_TEMPLATE([HAVE_READLINE],[Define if Readline is used.])
+if test x"$with_readline" != xno; then
+#  $UNSET ac_cv_lib_Xext_XShmQueryExtension
+  AC_CHECK_LIB(readline, readline,
+               with_readline=yes;
+	       LIBS="$LIBS -lreadline";
+	       AC_DEFINE(HAVE_READLINE),
+               with_readline=no;
+               problem_readline=": Can't detect readline library.",
+               [])
+fi
+
+AC_CHECK_LIB(readline, readline)
+AC_CHECK_LIB(history, add_history)
+
+# ********* MIT Shared Memory Extension
+AC_ARG_ENABLE(shm,
+  [  --disable-shm           disable MIT Shared Memory Extension],
+  [ if test x"$enableval" = xyes; then
+    with_shm="yes, check"
+  else
+    with_shm="no"
+    problem_shm=": Explicitly disabled"
+  fi ],
+  [ with_shm="not specified, check" ]
+)
+
+AH_TEMPLATE([HAVE_XSHM],[Define if  MIT Shared Memory extension is used.])
+if test x"$with_shm" != xno; then
+#  $UNSET ac_cv_lib_Xext_XShmQueryExtension
+  AC_CHECK_LIB(Xext, XShmQueryExtension,
+               with_shm=yes; AC_DEFINE(HAVE_XSHM),
+               with_shm=no;
+               problem_shm=": Can't detect MIT Shared Memory ext.",
+               [$X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS])
+fi
+
+# Checks for libraries.
+AC_CHECK_LIB([GL], [XCloseDisplay])
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([fcntl.h memory.h stdlib.h string.h sys/ioctl.h sys/time.h termios.h unistd.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+AC_DEFINE_UNQUOTED([VERSION_MAJOR], 0, [The major version])
+AC_DEFINE_UNQUOTED([VERSION_MINOR], 6, [The minor version])
+AC_DEFINE_UNQUOTED([PATCHLEVEL], 0, [The patch level])
+
+AC_DEFINE_UNQUOTED([COMPILE_TIME], "`date`", [Date program was compiled])
+AC_DEFINE([COMPILE_BY], ["G. Allen Morris III"], [Name of person that compiled this program])
+AC_DEFINE([COMPILE_VERSION], [0], [description])
+
+# Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_FUNC_STAT
+AC_CHECK_FUNCS([bzero gethostname gettimeofday memset mkdir select strdup strrchr uname])
+
+AM_INIT_AUTOMAKE
+
+AC_CONFIG_FILES([Makefile
+                 romdump/Makefile
+                 src/x48.man
+                 src/Makefile])
+AC_OUTPUT
+
+echo "
+X48 Configuration:
+
+  Version:     $VERSION$VERSIONINFO
+
+  Executables: $bindir
+  Man pages:   $mandir
+
+  With ReadLine sup. in FvwmConsole?  $with_readline$problem_readline
+  With Shared memory for XImage?      $with_shm$problem_shm
+
+See INSTALL.x48 for the description of what this may mean."
+

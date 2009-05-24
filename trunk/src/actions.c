@@ -621,7 +621,6 @@ do_shutdown()
     pause();
 
     if (got_alarm) {
-
       got_alarm = 0;
 
 #ifdef HAVE_XSHM
@@ -678,14 +677,12 @@ do_shutdown()
       }
 
       alarms++;
-
     }
 
     if (enter_debugger)
       {
         wake = 1;
       }
-
   } while (wake == 0);
 
   stop_timer(IDLE_TIMER);

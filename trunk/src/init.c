@@ -65,8 +65,6 @@
  * $Id: init.c,v 1.13 1995/01/11 18:20:01 ecd Exp ecd $
  */
 
-#include "global.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -82,7 +80,6 @@
 #include "hp48.h"
 #include "hp48_emu.h"
 #include "device.h"
-#include "version.h"
 #include "resources.h"
 #include "romio.h"
 
@@ -236,6 +233,8 @@ typedef struct saturn_0_3_0_t {
 } saturn_0_3_0_t;
 
 saturn_0_3_0_t saturn_0_3_0;
+
+#include "config.h"
 
 void
 #ifdef __FunctionProto__
@@ -942,7 +941,7 @@ FILE *fp;
   if (!read_16(fp, (word_16 *)&saturn.t1_tick)) return 0;
   if (!read_16(fp, (word_16 *)&saturn.t2_tick)) return 0;
   if (!read_32(fp, &saturn.i_per_s)) return 0;
-  if (!read_16(fp, &saturn.bank_switch)) return 0;
+  if (!read_16(fp, (word_16 *)&saturn.bank_switch)) return 0;
   for (i = 0; i < NR_MCTL; i++)
     {
       if (!read_16(fp, &saturn.mem_cntl[i].unconfigured)) return 0;

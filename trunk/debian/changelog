@@ -1,3 +1,11 @@
+x48 (0.6.0) unstable; urgency=low
+
+  * Added simple paste feature
+  * Repaired debugger non-readline input 
+  * Changed from building with Imakefile to using GNU autoconfig
+
+ -- G. Allen Morris III <gam3@gam3.net>  Thu, 20 Apr 2006 08:09:01 -0400
+
 x48 (0.4.3) unstable; urgency=low
 
   * Imporved mouse and refresh

@@ -47,7 +47,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "version.h"
 #include "constants.h"
 #include "resources.h"
 

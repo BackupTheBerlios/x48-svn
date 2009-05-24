@@ -57,7 +57,7 @@
 
 #if 0
 #define DEBUG_TIMER
-#define DEBUG_SCHED
+#define DEBUG_SCHED 1
 #define DEBUG_DISP_SCHED
 #endif
 
@@ -212,7 +212,7 @@ decode_group_80()
             REG = saturn.A;
           else
             REG = saturn.C;
-          if (op4 == 6 || op4 == 0xa) 
+          if (op4 == 6 || op4 == 0xa)
             t = 0;
           else
             t = 1;
@@ -2457,12 +2457,17 @@ emulate()
     while ((tv.tv_sec == tv2.tv_sec) && ((tv.tv_usec - tv2.tv_usec) < 2)) {
 	gettimeofday(&tv, &tz);
     }
+
     tv2.tv_usec = tv.tv_usec;
     tv2.tv_sec = tv.tv_sec;
 
-/* We need to trottle the speed here. */
+/* We need to throttle the speed here. */
 
-    if (schedule_event-- == 0)
+    if (schedule_event < 0) {
+//puts("bug");
+//	schedule_event = 0;
+    }
+    if (schedule_event-- <= 0)
       {
         schedule();
       }

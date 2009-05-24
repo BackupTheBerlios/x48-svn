@@ -1,3 +1,8 @@
+2006-04-20 "G. Allen Morris III" <gam3@gam3.net>
+	* Added simple paste feature
+	* Repaired debugger non-readline input 
+	* Changed from building with Imakefile to using GNU autoconfig
+
 2005-03-20 "G. Allen Morris III" <gam3@gam3.net>
 	* added equal key for + and Meta Keys for Alpha
 	* applied a different fix for the arrow repeat key bug 

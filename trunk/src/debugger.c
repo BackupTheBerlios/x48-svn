@@ -52,6 +52,10 @@
 #include "global.h"
 
 #include <stdio.h>
+#ifdef HAVE_READLINE
+# include <readline/readline.h>
+# include <readline/history.h>
+#endif
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -72,9 +76,6 @@
 #include "romio.h"
 #include "resources.h"
 
-extern char *readline __ProtoType__ ((const char *));
-extern void add_history __ProtoType__ ((char *));
-
 #define MAX_ARGS 16
 
 int enter_debugger = 0;
@@ -89,6 +90,9 @@ static char instr[100];
  */
 #define DSKTOP_SX	0x70579
 #define DSKBOT_SX	0x7057e
+/*
+ * Pointers in the HP48gx ROM
+ */
 #define DSKTOP_GX	0x806f8
 #define DSKBOT_GX	0x806fd
 
@@ -344,7 +348,6 @@ check_breakpoint (type, addr)
   return 0;
 }
 
-
 char *
 #ifdef __FunctionProto__
 read_str(char *str, int n, int fp)
@@ -362,7 +365,10 @@ read_str(str, n, fp)
     {
       cc = read(fp, str, n);
       if (cc > 0)
-        return str;
+        {
+	  str[cc] = '\0';
+          return str;
+	}
       if (cc == 0)
         return NULL;
 
@@ -376,11 +382,52 @@ read_str(str, n, fp)
           fcntl(fp, F_SETFL, flags);
           continue;
         }
- 
       return NULL;
     }
+    /* not reached */
 }
 
+#ifndef HAVE_READLINE
+char *
+#ifdef __FunctionProto__
+readline(char *prompt)
+#else
+readline(prompt)
+	char *prompt;
+#endif
+{
+  char rl[81];
+  char *nrl;
+  if (prompt)
+    {
+      printf("%s", prompt);
+      fflush(stdout);
+    }
+  nrl = read_str(rl, 80, 0);
+  if (nrl)
+    {
+      int len;
+      char *str;
+
+      len = strlen(nrl);
+      str = malloc(len + 1);
+
+      if (nrl[len-1] == '\n')
+        {
+	  nrl[len-1] = '\0';
+	}
+      if (NULL == str)
+        {
+	  fprintf(stderr, "Out of memory\n");
+	  exit(-1);
+        }
+
+      strcpy(str, nrl);
+      nrl = str;
+    }
+  return nrl;
+}
+#endif
 
 static inline void
 #ifdef __FunctionProto__
@@ -1079,7 +1126,7 @@ dump_hst ()
 }
 
 static char *mctl_str_gx[] = {
-  "MMIO       ", 
+  "MMIO       ",
   "SysRAM     ",
   "Bank Switch",
   "Port 1     ",
@@ -1088,7 +1135,7 @@ static char *mctl_str_gx[] = {
 };
 
 static char *mctl_str_sx[] = {
-  "MMIO  ", 
+  "MMIO  ",
   "SysRAM",
   "Port 1",
   "Port 2",
@@ -1420,6 +1467,66 @@ struct se {
   struct se *se_next;
 };
 
+char *
+#ifdef __FunctionProto__
+get_stack (void)
+#else
+get_stack ()
+#endif
+{
+  word_20 dsktop, dskbot;
+  word_20 sp = 0, end = 0, ent = 0;
+  word_20 ram_base, ram_mask;
+  char    dat[65536];
+  char    typ[256];
+  int i, n;
+
+  ram_base = saturn.mem_cntl[1].config[0];
+  ram_mask = saturn.mem_cntl[1].config[1];
+  if (opt_gx)
+    {
+      saturn.mem_cntl[1].config[0] = 0x80000;
+      saturn.mem_cntl[1].config[1] = 0xc0000;
+      dsktop = DSKTOP_GX;
+      dskbot = DSKBOT_GX;
+    }
+  else
+    {
+      saturn.mem_cntl[1].config[0] = 0x70000;
+      saturn.mem_cntl[1].config[1] = 0xf0000;
+      dsktop = DSKTOP_SX;
+      dskbot = DSKBOT_SX;
+    }
+
+  load_addr(&sp, dsktop, 5);
+  load_addr(&end, dskbot, 5);
+
+  n = (end - sp) / 5 - 1;   /* end never matches sp */
+
+  printf("n = %d\n", n);
+
+  //TODO Get the top of the stack in the buffer.
+  //TODO create a window and put the complete stack into it!
+  if (n)
+    {
+      load_addr(&ent, sp, 5);
+      decode_rpl_obj_2(ent, typ, dat);
+      printf("%d %p -> [%s] %s\n", i, ent, typ, dat);
+    }
+
+  for (i = 0; i < n; i++)
+    {
+      load_addr(&ent, sp + (5 * i), 5);
+      decode_rpl_obj_2(ent, typ, dat);
+      printf("%d %p -> [%s] %s\n", i, ent, typ, dat);
+    }
+
+  saturn.mem_cntl[1].config[0] = ram_base;
+  saturn.mem_cntl[1].config[1] = ram_mask;
+
+  return;
+}
+
 static void
 #ifdef __FunctionProto__
 do_stack (int argc, char **argv)
@@ -1493,7 +1600,7 @@ do_stack (argc, argv)
           }
       printf("%5d: %.5lX -> %s\n", se->se_n, se->se_p, buf);
       se = se->se_next;
-    } 
+    }
 
   se = stack;
   while (se)
@@ -1676,6 +1783,7 @@ debug ()
       if (enter_debugger & USER_INTERRUPT)
         if (verbose)
           printf ("%s: user interrupt (SIGINT) ignored\n", progname);
+        exit_x48(1);
       if (enter_debugger & BREAKPOINT_HIT)
         if (verbose)
           printf ("%s: breakpoint hit at 0x%.5lX ignored\n",
@@ -1734,15 +1842,7 @@ debug ()
       /*
        * read a command
        */
-#ifdef HAVE_READLINE
       rl = readline ("x48-debug> ");
-#else
-      if (rl == (char *) 0)
-        rl = (char *)malloc((size_t)80);
-      printf("x48-debug> ");
-      fflush(stdout);
-      rl = read_str(rl, 80, 0);
-#endif
 
       if (rl == (char *) 0)
 	{
@@ -1765,10 +1865,6 @@ debug ()
 	}
       else
 	{
-#ifndef HAVE_READLINE
-          if (rl[strlen(rl) - 1] == '\n')
-            rl[strlen(rl) - 1] = '\0';
-#endif
 	  if (cl)
 	    {
 	      free (cl);
@@ -1833,7 +1929,7 @@ debug ()
   in_debugger = 1;
   ticks = get_t1_t2 ();
   in_debugger = 0;
-  
+
   if (saturn.t2_ctrl & 0x01)
     {
       saturn.timer2 = ticks.t2_ticks;

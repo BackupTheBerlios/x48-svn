@@ -23,7 +23,9 @@ endif
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
-	# Add here commands to configure the package.
+
+	autoreconf
+	./configure --prefix=/usr
 
 	touch configure-stamp
 
@@ -33,11 +35,7 @@ build: build-stamp
 build-stamp: configure-stamp 
 	dh_testdir
 
-	# Add here commands to compile the package.
-	rm -f ./Makefile ./doc/Makefile ./romdump/Makefile ./src/Makefile ./test/Makefile ./utils/Makefile
-	xmkmf
 	$(MAKE)
-	#docbook-to-man debian/x48.sgml > x48.1
 
 	touch build-stamp
 

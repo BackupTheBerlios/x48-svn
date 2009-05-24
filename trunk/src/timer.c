@@ -166,8 +166,10 @@ word_64 *r2;
   if (r[1] >> 16) r[2]--;
   if (r[2] >> 16) r[3]--;
 
-  r2->lo = ((r[1] << 16) | (r[0] & 0xffff));
-  r2->hi = ((r[3] << 16) | (r[2] & 0xffff));
+  r2->lo = 0;
+  r2->hi = 0;
+  r2->lo = (((r[1] << 16) & 0xffff) | (r[0] & 0xffff));
+  r2->hi = (((r[3] << 16) & 0xffff) | (r[2] & 0xffff));
 }
 
 
@@ -655,6 +657,7 @@ get_t1_t2()
     }
 
   diff_time.lo = saturn.timer2;
+
   if (saturn.timer2 & 0x80000000)
     diff_time.hi = 0xffffffff;
   else
@@ -662,7 +665,7 @@ get_t1_t2()
 
   adj_time.lo = access_time.lo;
   adj_time.hi = access_time.hi;
- 
+
   sub_64(diff_time, &adj_time);
 
   if (adj_time.hi & 0x8000000)

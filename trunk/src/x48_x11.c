@@ -150,7 +150,6 @@ int	 does_backing_store;
 int	 color_mode;
 int	 icon_color_mode;
 
-#define DEBUG_FOCUS 1
 #if 0
 # define DEBUG_XEVENT 1
 # define DEBUG_BUTTONS 1
@@ -638,7 +637,7 @@ icon_map_t icon_maps_sx[] = {
   { hp48_bottom_width, hp48_bottom_height, PAD, hp48_bottom_bits },
   { hp48_logo_width, hp48_logo_height, LOGO, hp48_logo_bits },
   { hp48_text_width, hp48_text_height, LABEL, hp48_text_bits },
-  { hp48_keys_width, hp48_keys_height, BLACK, hp48_keys_bits }, 
+  { hp48_keys_width, hp48_keys_height, BLACK, hp48_keys_bits },
   { hp48_orange_width, hp48_orange_height, LEFT, hp48_orange_bits },
   { hp48_blue_width, hp48_blue_height, RIGHT, hp48_blue_bits }
 };
@@ -651,7 +650,7 @@ icon_map_t icon_maps_gx[] = {
   { hp48_bottom_width, hp48_bottom_height, PAD, hp48_bottom_bits },
   { hp48_logo_gx_width, hp48_logo_gx_height, LOGO, hp48_logo_gx_bits },
   { hp48_text_gx_width, hp48_text_gx_height, LABEL, hp48_text_gx_bits },
-  { hp48_keys_width, hp48_keys_height, BLACK, hp48_keys_bits }, 
+  { hp48_keys_width, hp48_keys_height, BLACK, hp48_keys_bits },
   { hp48_orange_width, hp48_orange_height, LEFT, hp48_orange_bits },
   { hp48_green_gx_width, hp48_green_gx_height, RIGHT, hp48_green_gx_bits }
 };
@@ -1272,6 +1271,8 @@ unsigned int length;
   return 0;
 }
 
+#include <X11/cursorfont.h>
+
 int
 #ifdef __FunctionProto__
 CreateButtons(void)
@@ -1313,6 +1314,8 @@ CreateButtons()
 			KEYBOARD_OFFSET_Y + buttons[i].y,
 			buttons[i].w, buttons[i].h, 0,
 			COLOR(BLACK), pixel);
+
+    XDefineCursor(dpy, buttons[i].xwin, XCreateFontCursor(dpy, XC_hand1));
 
     xswa.event_mask = LeaveWindowMask | ExposureMask | StructureNotifyMask;
     xswa.backing_store = Always;
@@ -1759,8 +1762,8 @@ unsigned int h;
           }
         else
           {
-            pw = 44;
-            ph = 9;
+            pw = 46;
+            ph = 11;
           }
 
 	pix = XCreatePixmap(dpy, keypad.pixmap, pw, ph, depth);
@@ -1777,7 +1780,7 @@ unsigned int h;
         if (opt_gx)
           y = 14;
         else
-          y = 8;
+          y = 9;
 
         DrawSmallString(dpy, pix, gc, x, y,
                         buttons[i].left, strlen(buttons[i].left));
@@ -1786,10 +1789,10 @@ unsigned int h;
 
         if (!opt_gx)
           {
-	    XDrawPoint(dpy, pix, gc, 0, 0); 
-	    XDrawPoint(dpy, pix, gc, 0, ph - 1); 
-	    XDrawPoint(dpy, pix, gc, pw - 1, 0); 
-	    XDrawPoint(dpy, pix, gc, pw - 1, ph - 1); 
+	    XDrawPoint(dpy, pix, gc, 0, 0);
+	    XDrawPoint(dpy, pix, gc, 0, ph - 1);
+	    XDrawPoint(dpy, pix, gc, pw - 1, 0);
+	    XDrawPoint(dpy, pix, gc, pw - 1, ph - 1);
           }
 
         if (opt_gx)
@@ -1890,10 +1893,10 @@ unsigned int h;
 
         if (!opt_gx)
           {
-	    XDrawPoint(dpy, pix, gc, 0, 0); 
-	    XDrawPoint(dpy, pix, gc, 0, ph - 1); 
-	    XDrawPoint(dpy, pix, gc, pw - 1, 0); 
-	    XDrawPoint(dpy, pix, gc, pw - 1, ph - 1); 
+	    XDrawPoint(dpy, pix, gc, 0, 0);
+	    XDrawPoint(dpy, pix, gc, 0, ph - 1);
+	    XDrawPoint(dpy, pix, gc, pw - 1, 0);
+	    XDrawPoint(dpy, pix, gc, pw - 1, ph - 1);
           }
 
         if (opt_gx)
@@ -2079,7 +2082,7 @@ unsigned int h;
             (int)(DISPLAY_OFFSET_X + 1),
 	    (int)(DISPLAY_OFFSET_Y - 1),
             (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH - 2),
-            (int)(DISPLAY_OFFSET_Y - 1)); 
+            (int)(DISPLAY_OFFSET_Y - 1));
   XDrawLine(dpy, keypad.pixmap, gc,
             (int)(DISPLAY_OFFSET_X + 1),
 	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT),
@@ -2480,7 +2483,7 @@ refresh_icon()
     {
       /*
        * draw the 'x48' string
-       */ 
+       */
       XSetStipple(dpy, gc, icon_text_pix);
       if (icon_color_mode == COLOR_MODE_MONO)
         XSetForeground(dpy, gc, COLOR(BLACK));
@@ -3152,7 +3155,7 @@ int     b;
     saturn.keybuf.rows[r] &= ~c;
   }
 #ifdef DEBUG_BUTTONS
-  fprintf(stderr, "Button pressed  %d (%s)\n",
+  fprintf(stderr, "Button released  %d (%s)\n",
           buttons[b].code, buttons[b].name);
 #endif
   return 0;
@@ -3233,8 +3236,8 @@ XEvent *xev;
       }
     }
 #ifdef DEBUG_BUTTONS
-    fprintf(stderr, "Button pressed  %d (%s)\n",
-            buttons[b].code, buttons[b].name);
+    fprintf(stderr, "Key pressed  %d (%s) %x\n",
+            buttons[b].code, buttons[b].name), c;
 #endif
   } else {
           if (code == 0x8000) {
@@ -3248,11 +3251,11 @@ XEvent *xev;
           }
           buttons[b].pressed = 0;
           DrawButton(b);
-  }
 #ifdef DEBUG_BUTTONS
-    fprintf(stderr, "Button released %d (%s)\n",
+    fprintf(stderr, "Key released %d (%s)\n",
             buttons[b].code, buttons[b].name);
 #endif
+  }
   return 0;
 }
 
@@ -3264,38 +3267,15 @@ refresh_display(void)
 refresh_display()
 #endif
 {
-  if (shm_flag) { 
+  if (shm_flag) {
     if (disp.display_update & UPDATE_DISP) {
-#ifdef XSHM_WAIT_FOR_SEND_EVENT
-      XShmPutImage(dpy, disp.win, disp.gc, disp.disp_image, disp.offset, 0,
-                   5, 20, 262, (unsigned int)(disp.lines + 2), 1);
-      while(1) {
-        XEvent xev;
-        XNextEvent(dpy, &xev);
-        if(xev.type == CompletionType)
-          break;
-      }
-#else
       XShmPutImage(dpy, disp.win, disp.gc, disp.disp_image, disp.offset, 0,
                    5, 20, 262, (unsigned int)(disp.lines + 2), 0);
-#endif
     }
     if ((disp.lines < 126) && (disp.display_update & UPDATE_MENU)) {
-#ifdef XSHM_WAIT_FOR_SEND_EVENT
-      XShmPutImage(dpy, disp.win, disp.gc, disp.menu_image,
-                   0, 0, 5, (int)(disp.lines + 22),
-                   262, (unsigned int)(126 - disp.lines), 1);
-      while(1) {
-        XEvent xev;
-        XNextEvent(dpy, &xev);
-        if(xev.type == CompletionType)
-          break;
-      }
-#else
       XShmPutImage(dpy, disp.win, disp.gc, disp.menu_image,
                    0, 0, 5, (int)(disp.lines + 22),
                    262, (unsigned int)(126 - disp.lines), 0);
-#endif
     }
     disp.display_update = 0;
   }
@@ -3310,7 +3290,7 @@ DrawDisp()
 #endif
 {
 #ifdef HAVE_XSHM
-  if (shm_flag) { 
+  if (shm_flag) {
     XShmPutImage(dpy, disp.win, disp.gc, disp.disp_image, disp.offset, 0,
                  5, 20, 262, (unsigned int)(disp.lines + 2), 0);
     if (display.lines < 63) {
@@ -3386,7 +3366,7 @@ int     allow_off_screen;
 
   XGetWindowAttributes(dpy, win, &xwa);
   sprintf(s, "%ux%u%s%d%s%d", xwa.width, xwa.height,
-          (x_s > 0) ? "+" : "-", x, (y_s > 0) ? "+" : "-", y); 
+          (x_s > 0) ? "+" : "-", x, (y_s > 0) ? "+" : "-", y);
 }
 
 void
@@ -3477,6 +3457,8 @@ int     buflen;
 {
   int wake;
 
+printf("decode_key %d %c %d\n", buflen, buf[0], sym);
+
   wake = 0;
   if (buflen == 1)
     switch (buf[0]) {
@@ -3513,6 +3495,8 @@ int     buflen;
       default:
         break;
     }
+
+printf("decode_key (%d) [%c] {%d}\n", buflen, buf[0], sym);
 
   switch ((int)sym) {
     case XK_KP_0:
@@ -3619,10 +3603,12 @@ int     buflen;
       wake = 1;
       break;
     case XK_Shift_L:
+    case XK_Control_R:
       key_event(BUTTON_SHL, xev);
       wake = 1;
       break;
     case XK_Shift_R:
+    case XK_Control_L:
       key_event(BUTTON_SHR, xev);
       wake = 1;
       break;
@@ -3634,116 +3620,142 @@ int     buflen;
       wake = 1;
       break;
     case XK_a:
+    case XK_A:
     case XK_F1:
       key_event(BUTTON_A, xev);
       wake = 1;
       break;
     case XK_b:
+    case XK_B:
     case XK_F2:
       key_event(BUTTON_B, xev);
       wake = 1;
       break;
     case XK_c:
+    case XK_C:
     case XK_F3:
       key_event(BUTTON_C, xev);
       wake = 1;
       break;
     case XK_d:
+    case XK_D:
     case XK_F4:
       key_event(BUTTON_D, xev);
       wake = 1;
       break;
     case XK_e:
+    case XK_E:
     case XK_F5:
       key_event(BUTTON_E, xev);
       wake = 1;
       break;
     case XK_f:
+    case XK_F:
     case XK_F6:
       key_event(BUTTON_F, xev);
       wake = 1;
       break;
     case XK_g:
+    case XK_G:
       key_event(BUTTON_MTH, xev);
       wake = 1;
       break;
     case XK_h:
+    case XK_H:
       key_event(BUTTON_PRG, xev);
       wake = 1;
       break;
     case XK_i:
+    case XK_I:
       key_event(BUTTON_CST, xev);
       wake = 1;
       break;
     case XK_j:
+    case XK_J:
       key_event(BUTTON_VAR, xev);
       wake = 1;
       break;
     case XK_k:
+    case XK_K:
     case XK_Up:
       key_event(BUTTON_UP, xev);
       wake = 1;
       break;
     case XK_l:
+    case XK_L:
       key_event(BUTTON_NXT, xev);
       wake = 1;
       break;
     case XK_m:
+    case XK_M:
       key_event(BUTTON_COLON, xev);
       wake = 1;
       break;
     case XK_n:
+    case XK_N:
       key_event(BUTTON_STO, xev);
       wake = 1;
       break;
     case XK_o:
+    case XK_O:
       key_event(BUTTON_EVAL, xev);
       wake = 1;
       break;
     case XK_p:
+    case XK_P:
     case XK_Left:
       key_event(BUTTON_LEFT, xev);
       wake = 1;
       break;
     case XK_q:
+    case XK_Q:
     case XK_Down:
       key_event(BUTTON_DOWN, xev);
       wake = 1;
       break;
     case XK_r:
+    case XK_R:
     case XK_Right:
       key_event(BUTTON_RIGHT, xev);
       wake = 1;
       break;
     case XK_s:
+    case XK_S:
       key_event(BUTTON_SIN, xev);
       wake = 1;
       break;
     case XK_t:
+    case XK_T:
       key_event(BUTTON_COS, xev);
       wake = 1;
       break;
     case XK_u:
+    case XK_U:
       key_event(BUTTON_TAN, xev);
       wake = 1;
       break;
     case XK_v:
+    case XK_V:
       key_event(BUTTON_SQRT, xev);
       wake = 1;
       break;
     case XK_w:
+    case XK_W:
       key_event(BUTTON_POWER, xev);
       wake = 1;
       break;
     case XK_x:
+    case XK_X:
       key_event(BUTTON_INV, xev);
       wake = 1;
       break;
     case XK_y:
+    case XK_Y:
       key_event(BUTTON_NEG, xev);
       wake = 1;
       break;
     case XK_z:
+    case XK_Z:
       key_event(BUTTON_EEX, xev);
       wake = 1;
       break;
@@ -3753,6 +3765,18 @@ int     buflen;
   return wake;
 }
 
+#define MAX_PASTE 128
+int  paste[MAX_PASTE*3];
+int  paste_count = 0;
+int  paste_size = 0;
+int  paste_last_key = 0;
+
+int first_key = 0;
+
+int last_button = -1;
+
+extern char *get_stack(void);
+
 int
 #ifdef __FunctionProto__
 GetEvent(void)
@@ -3760,184 +3784,627 @@ GetEvent(void)
 GetEvent()
 #endif
 {
-  XEvent               xev;
+  XEvent xev;
   XClientMessageEvent *cm;
-  int                  i, wake, bufs = 2;
-  char                 buf[2];
-  KeySym               sym;
-  int                  button_expose;
-  static int           button_leave = -1;
-  static int           release_pending = 0;
-  static XKeyEvent     release_event;
-  static Time          last_release_time = 0;
+  int i, wake, bufs = 2;
+  char buf[2];
+  KeySym sym;
+  int button_expose;
+  static int button_leave = -1;
+  static int release_pending = 0;
+  static XKeyEvent release_event;
+  static Time last_release_time = 0;
+
 
   wake = 0;
+  if (paste_last_key)
+    {
+      button_released (paste[paste_count - 1]);
+      paste_last_key = 0;
+      return 1;
+    }
+  else if (paste_count < paste_size)
+    {
+      button_pressed (paste[paste_count]);
+      paste_last_key = 1;
+      paste_count++;
+      return 1;
+    }
 
   if (release_pending)
     {
-      i = XLookupString(&release_event, buf, bufs, &sym, NULL);
-      wake = decode_key((XEvent *)&release_event, sym, buf, i);
+printf("release_pending\n");
+      i = XLookupString (&release_event, buf, bufs, &sym, NULL);
+      wake = decode_key ((XEvent *) & release_event, sym, buf, i);
       release_pending = 0;
+      return wake;
     }
 
-  while (XPending(dpy) > 0) {
-
-    XNextEvent(dpy, &xev);
-
-    switch ((int)xev.type) {
-
-      case KeyPress:
-
-        release_pending = 0;
-        if (xev.xkey.time == last_release_time)
-          break;
-
-        i = XLookupString(&xev.xkey, buf, bufs, &sym, NULL);
-        wake = decode_key(&xev, sym, buf, i);
-        break;
-
-      case KeyRelease:
-
-        release_pending = 1;
-        last_release_time = xev.xkey.time;
-        memcpy(&release_event, &xev, sizeof(XKeyEvent));
-        break;
-
-      case NoExpose:
-
-	break;
-
-      case Expose:
-
-	if (xev.xexpose.count == 0)
-	  {
-	    if (xev.xexpose.window == disp.win) 
-	      {
-		DrawDisp();
-	      }
-	    else if (xev.xexpose.window == iconW) 
-	      {
-		DrawIcon();
-	      }
-	    else if (xev.xexpose.window == mainW)
-	      {
-		DrawKeypad();
-	      }
-	    else
-	      for (i = BUTTON_A; i <= LAST_BUTTON; i++)
-	        {
-		  if (xev.xexpose.window == buttons[i].xwin)
-		    {
-		      DrawButton(i);
-		      break;
-		    }
-	        }
-	  }
-        break;
-      case UnmapNotify:
-
-        disp.mapped = 0;
-        break;
-
-      case MapNotify:
-
-	if (!disp.mapped)
-	  {
-	    disp.mapped = 1;
-	    update_display();
-	    redraw_annunc();
-	  }
-        break;
-
-      case ButtonPress:
-
-        if (xev.xbutton.button == Button1 || xev.xbutton.button == Button3)
-	  {
-	    for (i = BUTTON_A; i <= LAST_BUTTON; i++) 
-	      {
-		if (xev.xbutton.subwindow == buttons[i].xwin) 
-		  {
-		    if (buttons[i].pressed) {
-			if (xev.xbutton.button == Button3) {
-			    button_released(i);
-			    DrawButton(i);
-			}
-		    } else {
-			button_pressed(i);
-			wake = 1;
-			DrawButton(i);
-		    }
-		    break;
-		  }
-	      }
-	  }
-	else if (xev.xbutton.button == Button2) 
-	  {
-	    int x;
-	    char *paste = XFetchBytes(dpy, &x);
-	  }
-	break;
-
-      case ButtonRelease:
-
-	if (xev.xbutton.button == Button1)
-	  {
-	      button_release_all();
-	  }
-	break;
-
-      case MappingNotify:
-
-	switch (xev.xmapping.request) 
+  do
+    {
+      while (XPending (dpy) > 0)
 	{
-	  case MappingModifier:
-	  case MappingKeyboard:
-	    XRefreshKeyboardMapping(&xev.xmapping);
-	    break;
-	  case MappingPointer:
-          default:
-	    break;
-        }
-        break;
 
-      case EnterNotify:
-      case LeaveNotify:
+	  XNextEvent (dpy, &xev);
 
-        break;
+	  switch ((int) xev.type)
+	    {
 
-      case ClientMessage:
+	    case KeyPress:
 
-        cm = (XClientMessageEvent *)&xev;
+fprintf(stderr, "ptime %d\n", xev.xkey.time - last_release_time);
+	      if (release_pending)
+		{
+		  printf ("xxx release_pending\n");
+		}
+	      release_pending = 0;
+	      if ((xev.xkey.time - last_release_time) <= 1)
+		{
+		  release_pending = 0;
+		  break;
+		}
 
-        if (cm->message_type == wm_protocols)
-          {
-            if (cm->data.l[0] == wm_delete_window)
-              {
-                /*
-                 * Quit selected from window managers menu
-                 */
-		exit_x48(1);
-              }
+	      i = XLookupString (&xev.xkey, buf, bufs, &sym, NULL);
+	      wake = decode_key (&xev, sym, buf, i);
+	      first_key = 1;
+	      break;
 
-            if (cm->data.l[0] == wm_save_yourself)
-              {
-		save_command_line();
-              }
-	  }
-        break;
+	    case KeyRelease:
 
-      default:
+fprintf(stderr, "rtime %d\n", xev.xkey.time - last_release_time);
+	      i = XLookupString (&xev.xkey, buf, bufs, &sym, NULL);
+	      printf ("release %d\n", first_key);
+	      first_key = 0;
+	      release_pending = 1;
+	      last_release_time = xev.xkey.time;
+	      memcpy (&release_event, &xev, sizeof (XKeyEvent));
+	      break;
+
+	    case NoExpose:
+
+	      break;
+
+	    case Expose:
+
+	      if (xev.xexpose.count == 0)
+		{
+		  if (xev.xexpose.window == disp.win)
+		    {
+		      DrawDisp ();
+		    }
+		  else if (xev.xexpose.window == iconW)
+		    {
+		      DrawIcon ();
+		    }
+		  else if (xev.xexpose.window == mainW)
+		    {
+		      DrawKeypad ();
+		    }
+		  else
+		    for (i = BUTTON_A; i <= LAST_BUTTON; i++)
+		      {
+			if (xev.xexpose.window == buttons[i].xwin)
+			  {
+			    DrawButton (i);
+			    break;
+			  }
+		      }
+		}
+	      break;
+	    case UnmapNotify:
+
+	      disp.mapped = 0;
+	      break;
+
+	    case MapNotify:
+
+	      if (!disp.mapped)
+		{
+		  disp.mapped = 1;
+		  update_display ();
+		  redraw_annunc ();
+		}
+	      break;
+
+	    case ButtonPress:
+
+	      if (xev.xbutton.subwindow == disp.win)
+		{
+		  if (xev.xbutton.button == Button2)
+		    {
+		      if (xev.xbutton.subwindow == disp.win)
+			{
+			  int x;
+			  int flag = 0;
+			  char *paste_in = XFetchBuffer (dpy, &x, 0);
+
+			  char *p = paste_in;
+			  if (x > MAX_PASTE)
+			    {
+			      x = 0;
+			      printf ("input too long. limit is %d characters\n",
+				      MAX_PASTE);
+			    }
+			  paste_count = 0;
+			  paste_size = 0;
+			  while (x--)
+			    {
+			      char c = *p++;
+			      switch (c)
+				{
+				case '.':
+				  paste[paste_size++] = BUTTON_PERIOD;
+				  break;
+				case '0':
+				  paste[paste_size++] = BUTTON_0;
+				  break;
+				case '1':
+				  paste[paste_size++] = BUTTON_1;
+				  break;
+				case '2':
+				  paste[paste_size++] = BUTTON_2;
+				  break;
+				case '3':
+				  paste[paste_size++] = BUTTON_3;
+				  break;
+				case '4':
+				  paste[paste_size++] = BUTTON_4;
+				  break;
+				case '5':
+				  paste[paste_size++] = BUTTON_5;
+				  break;
+				case '6':
+				  paste[paste_size++] = BUTTON_6;
+				  break;
+				case '7':
+				  paste[paste_size++] = BUTTON_7;
+				  break;
+				case '8':
+				  paste[paste_size++] = BUTTON_8;
+				  break;
+				case '9':
+				  paste[paste_size++] = BUTTON_9;
+				  break;
+				case '\n':
+				  paste[paste_size++] = BUTTON_SHR;
+				  paste[paste_size++] = BUTTON_PERIOD;
+				  break;
+				case '!':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_DEL;
+				  break;
+				case '+':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  paste[paste_size++] = BUTTON_PLUS;
+				  break;
+				case '-':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  paste[paste_size++] = BUTTON_MINUS;
+				  break;
+				case '*':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  paste[paste_size++] = BUTTON_MUL;
+				  break;
+				case '/':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  paste[paste_size++] = BUTTON_DIV;
+				  break;
+				case ' ':
+				  paste[paste_size++] = 47;
+				  break;
+				case '(':
+				  paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_DIV;
+				  break;
+				case '[':
+				  paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_MUL;
+				  break;
+				case '<':
+				  if (x > 1 && *p == '<')
+				    {
+				      paste[paste_size++] = BUTTON_SHL;
+				      paste[paste_size++] = BUTTON_MINUS;
+				      x--;
+				      p++;
+				    }
+				  else
+				    {
+				      paste[paste_size++] = BUTTON_ALPHA;
+				      paste[paste_size++] = BUTTON_SHL;
+				      paste[paste_size++] = BUTTON_2;
+				    }
+				  break;
+				case '{':
+				  paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_PLUS;
+				  break;
+				case ')':
+				case ']':
+				case '}':
+				  paste[paste_size++] = BUTTON_RIGHT;
+				  break;
+				case '>':
+				  if (x > 1 && *p == '>')
+				    {
+				      paste[paste_size++] = BUTTON_RIGHT;
+				      paste[paste_size++] = BUTTON_RIGHT;
+				      paste[paste_size++] = BUTTON_RIGHT;
+				      x--;
+				      p++;
+				    }
+				  else
+				    {
+				      paste[paste_size++] = BUTTON_ALPHA;
+				      paste[paste_size++] = BUTTON_SHR;
+				      paste[paste_size++] = BUTTON_2;
+				    }
+				  break;
+				case '#':
+				  paste[paste_size++] = BUTTON_SHR;
+				  paste[paste_size++] = BUTTON_DIV;
+				  break;
+				case '_':
+				  paste[paste_size++] = BUTTON_SHR;
+				  paste[paste_size++] = BUTTON_MUL;
+				  break;
+				case '"':
+				  if (flag & 1)
+				    {
+				      flag &= ~1;
+				      paste[paste_size++] = BUTTON_RIGHT;
+				    }
+				  else
+				    {
+				      flag |= 1;
+				      paste[paste_size++] = BUTTON_SHR;
+				      paste[paste_size++] = BUTTON_MINUS;
+				    }
+				  break;
+				case ':':
+				  if (flag & 2)
+				    {
+				      flag &= ~2;
+				      paste[paste_size++] = BUTTON_RIGHT;
+				    }
+				  else
+				    {
+				      flag |= 2;
+				      paste[paste_size++] = BUTTON_SHR;
+				      paste[paste_size++] = BUTTON_PLUS;
+				    }
+				  break;
+				case '\'':
+				  if (flag & 4)
+				    {
+				      flag &= ~4;
+				      paste[paste_size++] = BUTTON_RIGHT;
+				    }
+				  else
+				    {
+				      flag |= 4;
+				      paste[paste_size++] = BUTTON_COLON;
+				    }
+				  break;
+				case 'a':
+				case 'A':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_A;
+				  break;
+				case 'b':
+				case 'B':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_B;
+				  break;
+				case 'c':
+				case 'C':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_C;
+				  break;
+				case 'd':
+				case 'D':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_D;
+				  break;
+				case 'e':
+				case 'E':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_E;
+				  break;
+				case 'f':
+				case 'F':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_F;
+				  break;
+				case 'g':
+				case 'G':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_MTH;
+				  break;
+				case 'h':
+				case 'H':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_PRG;
+				  break;
+				case 'i':
+				case 'I':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_CST;
+				  break;
+				case 'j':
+				case 'J':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_VAR;
+				  break;
+				case 'k':
+				case 'K':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_UP;
+				  break;
+				case 'l':
+				case 'L':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_NXT;
+				  break;
+
+				case 'm':
+				case 'M':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_COLON;
+				  break;
+				case 'n':
+				case 'N':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_STO;
+				  break;
+				case 'o':
+				case 'O':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_EVAL;
+				  break;
+				case 'p':
+				case 'P':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_LEFT;
+				  break;
+				case 'q':
+				case 'Q':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_DOWN;
+				  break;
+				case 'r':
+				case 'R':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_RIGHT;
+				  break;
+				case 's':
+				case 'S':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_SIN;
+				  break;
+				case 't':
+				case 'T':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_COS;
+				  break;
+				case 'u':
+				case 'U':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_TAN;
+				  break;
+				case 'v':
+				case 'V':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_SQRT;
+				  break;
+				case 'w':
+				case 'W':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_POWER;
+				  break;
+				case 'x':
+				case 'X':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_INV;
+				  break;
+				case 'y':
+				case 'Y':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_NEG;
+				  break;
+				case 'z':
+				case 'Z':
+				  paste[paste_size++] = BUTTON_ALPHA;
+				  if (islower (c))
+				    paste[paste_size++] = BUTTON_SHL;
+				  paste[paste_size++] = BUTTON_EEX;
+				  break;
+				default:
+				  printf ("unknown %c %d\n", c, *p);
+				  break;
+				}
+			    }
+			  if (paste_in)
+			    XFree (paste_in);
+			  if (paste_size)
+			    {
+			      return 1;
+			    }
+			}
+		    }
+		  else if (xev.xbutton.button == Button3)
+		    {
+	                    /* TODO Make cut from the screen work. */
+			    get_stack();
+	            }
+		  else
+		    {
+printf("In display %d\n", xev.xbutton.button);
+		    }
+		}
+              else
+	        {
+		  if (xev.xbutton.button == Button1
+		      || xev.xbutton.button == Button2
+		      || xev.xbutton.button == Button3
+		     )
+		    {
+		      for (i = BUTTON_A; i <= LAST_BUTTON; i++)
+			{
+			  if (xev.xbutton.subwindow == buttons[i].xwin)
+			    {
+			      if (buttons[i].pressed)
+				{
+				  if (xev.xbutton.button == Button3
+				     )
+				    {
+				      button_released (i);
+				      DrawButton (i);
+				    }
+				}
+			      else
+				{
+				  last_button = i;
+				  button_pressed (i);
+				  wake = 1;
+				  first_key = 1;
+				  DrawButton (i);
+				}
+			      break;
+			    }
+			}
+		    }
+                }
+	      break;
+
+	    case ButtonRelease:
+
+	      first_key = 0;
+	      if (xev.xbutton.button == Button1)
+		{
+		  button_release_all ();
+		}
+	      if (xev.xbutton.button == Button2)
+		{
+		  if (last_button >= 0)
+		    {
+printf("Button 2 release %d\n", last_button);
+		      button_released (last_button);
+		      DrawButton (last_button);
+		    }
+		    last_button = -1;
+		}
+	      break;
+
+	    case MappingNotify:
+
+	      switch (xev.xmapping.request)
+		{
+		case MappingModifier:
+		case MappingKeyboard:
+		  XRefreshKeyboardMapping (&xev.xmapping);
+		  break;
+		case MappingPointer:
+		default:
+		  break;
+		}
+	      break;
+
+	    case EnterNotify:
+	    case LeaveNotify:
+
+	      break;
+
+	    case ClientMessage:
+
+	      cm = (XClientMessageEvent *) & xev;
+
+	      if (cm->message_type == wm_protocols)
+		{
+		  if (cm->data.l[0] == wm_delete_window)
+		    {
+		      /*
+		       * Quit selected from window managers menu
+		       */
+		      exit_x48 (1);
+		    }
+
+		  if (cm->data.l[0] == wm_save_yourself)
+		    {
+		      save_command_line ();
+		    }
+		}
+	      break;
+
+	    default:
 
 #ifdef DEBUG_XEVENT
-        printf("Event: %d\n", xev.type);
+	      printf ("Event: %d\n", xev.type);
 #endif
-      case KeymapNotify:
-      case ConfigureNotify:
-      case ReparentNotify:
-        break;
+	    case KeymapNotify:
+	    case ConfigureNotify:
+	    case ReparentNotify:
+	      break;
 
+	    }
+	}
     }
-  }
+  while (first_key > 1);
+  if (first_key)
+    {
+      first_key++;
+    }
   return wake;
 }
 
