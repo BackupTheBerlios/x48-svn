@@ -49,6 +49,8 @@
 #include "debugger.h"
 #include "romio.h"
 
+#include <assert.h>
+
 /* #define DEBUG_TIMER 1 */
 /* #define DEBUG_TIMER_ADJUST 1 */
 
@@ -73,18 +75,18 @@ static long systime_offset = 0;
 /*
  * Ticks for THU 01.01.1970 00:00:00
  */
-word_64 unix_0_time  = { 0x0001cf2e, 0x8f800000 };
-word_64 ticks_10_min = { 0x0, 0x00b40000 };
+word_64 unix_0_time  = 0x1CF2E8F800000L;
+word_64 ticks_10_min = 0x00b40000L;
 
 /*
  * Will be in saturn_t in the future
  */
-word_64 set_0_time = { 0x0, 0x0 };
+word_64 set_0_time = 0x0;
 
 /*
  * Calculated as (unix_0_time + set_0_time)
  */
-word_64 time_offset = { 0x0, 0x0 };
+word_64 time_offset = 0x0;
 
 #define RAM_BASE_SX	0x70000
 #define ACCESSTIME_SX	(0x70052 - RAM_BASE_SX)
@@ -99,79 +101,6 @@ word_64 time_offset = { 0x0, 0x0 };
 #define TIMEOUTCLK_GX	(0x80076 - RAM_BASE_GX)
 
 #define calc_crc(nib) (crc = (crc >> 4) ^ (((crc ^ (nib)) & 0xf) * 0x1081))
-
-static inline void
-#ifdef __FunctionProto__
-add_64(word_64 r1, word_64 *r2)
-#else
-add_64(r1, r2)
-word_64 r1;
-word_64 *r2;
-#endif
-{
-  unsigned short s1[4], s2[4];
-  unsigned long  r[4];
-
-  s1[0] = (unsigned short)(r1.lo & 0xffff);
-  s1[1] = (unsigned short)((r1.lo >> 16) & 0xffff);
-  s1[2] = (unsigned short)(r1.hi & 0xffff);
-  s1[3] = (unsigned short)((r1.hi >> 16) & 0xffff);
-
-  s2[0] = (unsigned short)(r2->lo & 0xffff);
-  s2[1] = (unsigned short)((r2->lo >> 16) & 0xffff);
-  s2[2] = (unsigned short)(r2->hi & 0xffff);
-  s2[3] = (unsigned short)((r2->hi >> 16) & 0xffff);
-
-  r[0] = (unsigned long)s1[0] + (unsigned long)s2[0];
-  r[1] = (unsigned long)s1[1] + (unsigned long)s2[1];
-  r[2] = (unsigned long)s1[2] + (unsigned long)s2[2];
-  r[3] = (unsigned long)s1[3] + (unsigned long)s2[3];
-
-  if (r[0] >> 16) r[1]++;
-  if (r[1] >> 16) r[2]++;
-  if (r[2] >> 16) r[3]++;
-
-  r2->lo = ((r[1] << 16) | (r[0] & 0xffff));
-  r2->hi = ((r[3] << 16) | (r[2] & 0xffff));
-}
-
-static inline void
-#ifdef __FunctionProto__
-sub_64(word_64 r1, word_64 *r2)
-#else
-sub_64(r1, r2)
-word_64 r1;
-word_64 *r2;
-#endif
-{
-  unsigned short s1[4], s2[4];
-  unsigned long  r[4];
-
-  s1[0] = (unsigned short)(r1.lo & 0xffff);
-  s1[1] = (unsigned short)((r1.lo >> 16) & 0xffff);
-  s1[2] = (unsigned short)(r1.hi & 0xffff);
-  s1[3] = (unsigned short)((r1.hi >> 16) & 0xffff);
-
-  s2[0] = (unsigned short)(r2->lo & 0xffff);
-  s2[1] = (unsigned short)((r2->lo >> 16) & 0xffff);
-  s2[2] = (unsigned short)(r2->hi & 0xffff);
-  s2[3] = (unsigned short)((r2->hi >> 16) & 0xffff);
-
-  r[0] = (unsigned long)s2[0] - (unsigned long)s1[0];
-  r[1] = (unsigned long)s2[1] - (unsigned long)s1[1];
-  r[2] = (unsigned long)s2[2] - (unsigned long)s1[2];
-  r[3] = (unsigned long)s2[3] - (unsigned long)s1[3];
-
-  if (r[0] >> 16) r[1]--;
-  if (r[1] >> 16) r[2]--;
-  if (r[2] >> 16) r[3]--;
-
-  r2->lo = 0;
-  r2->hi = 0;
-  r2->lo = (((r[1] << 16) & 0xffff) | (r[0] & 0xffff));
-  r2->hi = (((r[3] << 16) & 0xffff) | (r[2] & 0xffff));
-}
-
 
 /*
  * Set ACCESSTIME: (on startup)
@@ -226,27 +155,22 @@ set_accesstime()
 #endif
   tv.tv_sec -= systime_offset;
 
-  ticks.hi = (tv.tv_sec >> 19);
-  ticks.lo = (tv.tv_sec << 13);
-  ticks.lo |= (tv.tv_usec << 7) / 15625;
+  ticks = tv.tv_sec;
+  ticks <<= 13;
+  ticks += (tv.tv_usec << 7) / 15625;
 
-  time_offset.lo = unix_0_time.lo;
-  time_offset.hi = unix_0_time.hi;
+  time_offset = unix_0_time + set_0_time;
+  ticks += time_offset;
 
-  add_64(set_0_time, &time_offset);
-
-  add_64(time_offset, &ticks);
-
-  timer2.lo = saturn.timer2;
+  timer2 = saturn.timer2;
   if (saturn.timer2 & 0x80000000)
-    timer2.hi = 0xffffffff;
-  else
-    timer2.hi = 0x0;
+    {
+      assert(timer2 < 0);
+    }
 
-  add_64(timer2, &ticks);
+  ticks += timer2;
 
-  timeout.lo = ticks.lo;
-  timeout.hi = ticks.hi;
+  timeout = ticks;
 
   crc = 0x0;
 
@@ -267,12 +191,10 @@ set_accesstime()
 
   for (i = 0; i < 13; i++)
     {
-      val = ticks.lo & 0xf;
+      val = ticks & 0xf;
       calc_crc(val);
       saturn.ram[accesstime_loc + i] = val;
-      ticks.lo >>= 4;
-      ticks.lo |= (ticks.hi & 0xf) << 28;
-      ticks.hi >>= 4;
+      ticks >>= 4;
     }
 
   for (i = 0; i < 4; i++)
@@ -281,89 +203,17 @@ set_accesstime()
       crc >>= 4;
     }
 
-  add_64(ticks_10_min, &timeout);
+  timeout += ticks_10_min;
 
   for (i = 0; i < 13; i++)
     {
-      val = timeout.lo & 0xf;
+      val = timeout & 0xf;
       calc_crc(val);
       saturn.ram[timeout_loc + i] = val;
-      timeout.lo >>= 4;
-      timeout.lo |= (timeout.hi & 0xf) << 28;
-      timeout.hi >>= 4;
+      timeout >>= 4;
     }
 
   saturn.ram[timeoutclk_loc] = 0xf;
-}
-
-long
-#ifdef __FunctionProto__
-diff_timer(word_64 *t1, word_64 *t2)
-#else
-diff_timer(t1, t2)
-word_64 *t1;
-word_64 *t2;
-#endif
-{
-  return (t1->lo - t2->lo);
-}
-
-static inline void
-#ifdef __FunctionProto__
-add_sub_64(word_64 *t1, word_64 *t2, word_64 *diff)
-#else
-add_sub_64(t1, t2, diff)
-word_64 *t1;
-word_64 *t2;
-word_64 *diff;
-#endif
-{
-  unsigned short s1[4], s2[4];
-  unsigned long  r[4];
-
-  s1[0] = (unsigned short)(t1->lo & 0xffff);
-  s1[1] = (unsigned short)((t1->lo >> 16) & 0xffff);
-  s1[2] = (unsigned short)(t1->hi & 0xffff);
-  s1[3] = (unsigned short)((t1->hi >> 16) & 0xffff);
-
-  s2[0] = (unsigned short)(t2->lo & 0xffff);
-  s2[1] = (unsigned short)((t2->lo >> 16) & 0xffff);
-  s2[2] = (unsigned short)(t2->hi & 0xffff);
-  s2[3] = (unsigned short)((t2->hi >> 16) & 0xffff);
-
-  r[0] = (unsigned long)s1[0] - (unsigned long)s2[0];
-  r[1] = (unsigned long)s1[1] - (unsigned long)s2[1];
-  r[2] = (unsigned long)s1[2] - (unsigned long)s2[2];
-  r[3] = (unsigned long)s1[3] - (unsigned long)s2[3];
-
-  if (r[0] >> 16) r[1]--;
-  if (r[1] >> 16) r[2]--;
-  if (r[2] >> 16) r[3]--;
-
-  s1[0] = (unsigned short)(diff->lo & 0xffff);
-  s1[1] = (unsigned short)((diff->lo >> 16) & 0xffff);
-  s1[2] = (unsigned short)(diff->hi & 0xffff);
-  s1[3] = (unsigned short)((diff->hi >> 16) & 0xffff);
-
-  s2[0] = (unsigned short)r[0];
-  s2[1] = (unsigned short)r[1];
-  s2[2] = (unsigned short)r[2];
-  s2[3] = (unsigned short)r[3];
-
-  r[0] = (unsigned long)s1[0] + (unsigned long)s2[0];
-  r[1] = (unsigned long)s1[1] + (unsigned long)s2[1];
-  r[2] = (unsigned long)s1[2] + (unsigned long)s2[2];
-  r[3] = (unsigned long)s1[3] + (unsigned long)s2[3];
-
-  if (r[0] >> 16) r[1]++;
-  if (r[1] >> 16) r[2]++;
-  if (r[2] >> 16) r[3]++;
-
-  t2->lo = t1->lo;
-  t2->hi = t1->hi;
-
-  diff->lo = ((r[1] << 16) | (r[0] & 0xffff));
-  diff->hi = ((r[3] << 16) | (r[2] & 0xffff));
 }
 
 void
@@ -378,9 +228,7 @@ int timer;
 #ifndef SOLARIS
   struct timezone tz;
 #endif
-
-  if (timer > NR_TIMERS)
-    return;
+  assert(timer <= NR_TIMERS);
 
   if (timers[timer].run == 1)
     return;
@@ -394,17 +242,15 @@ int timer;
 
   timers[timer].run = 1;
   if (timer == T1_TIMER) {
-    timers[timer].start.hi = (tv.tv_sec >> 23);
-    timers[timer].start.lo = (tv.tv_sec << 9);
-    timers[timer].start.lo |= tv.tv_usec / 62500;
+    timers[timer].start = (tv.tv_sec << 9);
+    timers[timer].start += (tv.tv_usec / 15625) >> 3;
   } else {
-    timers[timer].start.hi = (tv.tv_sec >> 19);
-    timers[timer].start.lo = (tv.tv_sec << 13);
-    timers[timer].start.lo |= (tv.tv_usec << 7) / 15625;
+    timers[timer].start = tv.tv_sec;
+    timers[timer].start <<= 13;
+    timers[timer].start += (tv.tv_usec << 7) / 15625;
   }
 #ifdef DEBUG_TIMER
-  fprintf(stderr, "Timer[%d] start at 0x%.8lx%.8lx\n", timer,
-          timers[timer].start.hi, timers[timer].start.lo);
+  fprintf(stderr, "Timer%c[%d] start at 0x%lx\n", timer == T1_TIMER?'*':' ', timer, timers[timer].start);
 #endif
 }
 
@@ -424,9 +270,9 @@ int timer;
   if (timer > NR_TIMERS)
     return;
 
-  timers[timer].start.lo = timers[timer].start.hi = 0;
-  timers[timer].stop.lo = timers[timer].stop.hi = 0;
-  timers[timer].value.lo = timers[timer].value.hi = 0;
+  timers[timer].start = 0;
+  timers[timer].stop = 0;
+  timers[timer].value = 0;
 
 #ifdef SOLARIS
   gettimeofday(&tv);
@@ -437,17 +283,16 @@ int timer;
 
   timers[timer].run = 1;
   if (timer == T1_TIMER) {
-    timers[timer].start.hi = (tv.tv_sec >> 23);
-    timers[timer].start.lo = (tv.tv_sec << 9);
-    timers[timer].start.lo |= tv.tv_usec / 62500;
+    timers[timer].start = (tv.tv_sec << 9);
+    timers[timer].start += (tv.tv_usec / 15625) >> 3;
   } else {
-    timers[timer].start.hi = (tv.tv_sec >> 19);
-    timers[timer].start.lo = (tv.tv_sec << 13);
-    timers[timer].start.lo |= (tv.tv_usec << 7) / 15625;
+    timers[timer].start = tv.tv_sec;
+    timers[timer].start <<= 13;
+    timers[timer].start += (tv.tv_usec << 7) / 15625;
   }
 #ifdef DEBUG_TIMER
-  fprintf(stderr, "Timer[%d] restart at 0x%.8lx%.8lx\n", timer,
-          timers[timer].start.hi, timers[timer].start.lo);
+  fprintf(stderr, "Timer[%d] restart at 0x%lx\n", timer,
+          timers[timer].start);
 #endif
 }
 
@@ -479,19 +324,20 @@ int timer;
 
   timers[timer].run = 0;
   if (timer == T1_TIMER) {
-    timers[timer].stop.hi = (tv.tv_sec >> 23);
-    timers[timer].stop.lo = (tv.tv_sec << 9);
-    timers[timer].stop.lo |= tv.tv_usec / 62500;
+    timers[timer].stop = (tv.tv_sec << 9);
+    timers[timer].stop += (tv.tv_usec / 15625) >> 3;
   } else {
-    timers[timer].stop.hi = (tv.tv_sec >> 19);
-    timers[timer].stop.lo = (tv.tv_sec << 13);
-    timers[timer].stop.lo |= (tv.tv_usec << 7) / 15625;
+    timers[timer].stop = tv.tv_sec;
+    timers[timer].stop <<= 13;
+    timers[timer].stop += (tv.tv_usec << 7) / 15625;
   }
-  add_sub_64(&timers[timer].stop, &timers[timer].start, &timers[timer].value);
+
+  timers[timer].value += timers[timer].stop - timers[timer].start;
+//  add_sub_64(&timers[timer].stop, &timers[timer].start, &timers[timer].value);
+
 #ifdef DEBUG_TIMER
-  fprintf(stderr, "Timer[%d] stop at 0x%.8lx%.8lx, value 0x%.8lx%.8lx\n",
-          timer, timers[timer].stop.hi, timers[timer].stop.lo,
-          timers[timer].value.hi, timers[timer].value.lo);
+  fprintf(stderr, "Timer[%d] stop at 0x%llx, value 0x%llx\n",
+          timer, timers[timer].stop, timers[timer].value);
 #endif
 }
 
@@ -505,17 +351,16 @@ int timer;
 {
   if (timer > NR_TIMERS)
     return;
-
   timers[timer].run = 0;
-  timers[timer].start.lo = timers[timer].start.hi = 0;
-  timers[timer].stop.lo = timers[timer].stop.hi = 0;
-  timers[timer].value.lo = timers[timer].value.hi = 0;
+  timers[timer].start = 0;
+  timers[timer].stop = 0;
+  timers[timer].value = 0;
 #ifdef DEBUG_TIMER
   fprintf(stderr, "Timer[%d] reset\n", timer);
 #endif
 }
 
-static word_64 zero = { 0, 0 };
+static word_64 zero = 0;
 
 word_64
 #ifdef __FunctionProto__
@@ -544,16 +389,16 @@ int timer;
     tv.tv_sec -= systime_offset;
 
     if (timer == T1_TIMER) {
-      stop.hi = (tv.tv_sec >> 23);
-      stop.lo = (tv.tv_sec << 9);
-      stop.lo |= tv.tv_usec / 62500;
+      stop = (tv.tv_sec << 9);
+      stop += (tv.tv_usec / 15625) >> 3;
     } else {
-      stop.hi = (tv.tv_sec >> 19);
-      stop.lo = (tv.tv_sec << 13);
-      stop.lo |= (tv.tv_usec << 7) / 15625;
+      stop = tv.tv_sec;
+      stop <<= 13;
+      stop += (tv.tv_usec << 7) / 15625;
     }
-    add_sub_64(&stop, &timers[timer].start, &timers[timer].value);
+    timers[timer].value += stop - timers[timer].start;
   }
+
   return timers[timer].value;
 }
 
@@ -597,35 +442,34 @@ get_t1_t2()
 
   if (timers[T1_TIMER].run)
     {
-      stop.hi = (tv.tv_sec >> 23);
-      stop.lo = (tv.tv_sec << 9);
-      stop.lo |= tv.tv_usec / 62500;
-      add_sub_64(&stop, &timers[T1_TIMER].start, &timers[T1_TIMER].value);
+      stop = (tv.tv_sec << 9);
+      stop += (tv.tv_usec / 15625) >> 3;
+      if (timers[T1_TIMER].start <=  stop) 
+        {
+          timers[T1_TIMER].value += stop - timers[T1_TIMER].start;
+        } else {
+	  fprintf(stderr, "clock running backwards\n");
+	}
     }
-  ticks.t1_ticks = timers[T1_TIMER].value.lo;
+  ticks.t1_ticks = timers[T1_TIMER].value;
 
-  stop.hi = (tv.tv_sec >> 19);
-  stop.lo = (tv.tv_sec << 13);
-  stop.lo |= (tv.tv_usec << 7) / 15625;
+  stop = tv.tv_sec;
+  stop <<= 13;
+  stop += (tv.tv_usec << 7) / 15625;
   
-  add_64(time_offset, &stop);
+  stop += time_offset;
 
-  if (opt_gx)
-    accesstime_loc = ACCESSTIME_GX;
-  else
-    accesstime_loc = ACCESSTIME_SX;
+  accesstime_loc = opt_gx ? ACCESSTIME_GX : ACCESSTIME_SX;
 
-  access_time.lo = 0x0;
-  access_time.hi = 0x0;
+  access_time = 0x0;
+
   for (i = 13 - 1; i >= 0; i--)
     {
-      access_time.hi <<= 4;
-      access_time.hi |= ((access_time.lo >> 28) & 0xf);
-      access_time.lo <<= 4;
-      access_time.lo |= ((int)saturn.ram[accesstime_loc + i] & 0xf);
+      access_time <<= 4;
+      access_time |= ((int)saturn.ram[accesstime_loc + i] & 0xf);
     }
 
-  sub_64(stop, &access_time);
+  access_time -= stop;
 
   if (adj_time_pending || in_debugger)
     {
@@ -635,13 +479,13 @@ get_t1_t2()
        * Don't adjust the time, can't come from user, anyhow.
        */
 
-      if ((saturn.timer2 >= 0 && (access_time.lo & 0x80000000))
-          || ((unsigned long)saturn.timer2 > access_time.lo))
+      if ((saturn.timer2 >= 0 && access_time < 0)
+          || ((unsigned long)saturn.timer2 > access_time))
         {
           /*
            * check OK, return calculated time
            */
-          ticks.t2_ticks = access_time.lo;
+          ticks.t2_ticks = access_time;
         }
       else
         {
@@ -656,59 +500,33 @@ get_t1_t2()
       return ticks;
     }
 
-  diff_time.lo = saturn.timer2;
+  diff_time = saturn.timer2;
 
-  if (saturn.timer2 & 0x80000000)
-    diff_time.hi = 0xffffffff;
-  else
-    diff_time.hi = 0x0;
+  adj_time = access_time - diff_time;
+  delta = abs(adj_time);
 
-  adj_time.lo = access_time.lo;
-  adj_time.hi = access_time.hi;
-
-  sub_64(diff_time, &adj_time);
-
-  if (adj_time.hi & 0x8000000)
+  if (delta > 0x3c000)	/* Half a minute */
     {
-      delta.lo = 0x0;
-      delta.hi = 0x0;
-      sub_64(adj_time, &delta);
-    }
-  else
-    {
-      delta.lo = adj_time.lo;
-      delta.hi = adj_time.hi;
-    }
-
-  if (delta.hi != 0 || (delta.lo > 0x3c000))	/* Half a minute */
-    {
-      add_64(adj_time, &set_0_time);
-      add_64(adj_time, &time_offset);
-  
-      sub_64(adj_time, &access_time);
+      set_0_time += adj_time;
+      time_offset += adj_time;
+      access_time - adj_time;
   
 #ifdef DEBUG_TIMER_ADJUST
       fprintf(stderr, "Time adjusted by ");
-      if (adj_time.hi)
-        fprintf(stderr, "%lX%.8lX", adj_time.hi, adj_time.lo);
-      else
-        fprintf(stderr, "%lX", adj_time.lo);
+      fprintf(stderr, "%lX", adj_time);
       fprintf(stderr, " TICKS, Total offset ");
-      if (set_0_time.hi)
-        fprintf(stderr, "%lX%.8lX", set_0_time.hi, set_0_time.lo);
-      else
-        fprintf(stderr, "%lX", set_0_time.lo);
+      fprintf(stderr, "%lX", set_0_time);
       fprintf(stderr, " TICKS\n");
 #endif
     }
 
-  if ((saturn.timer2 >= 0 && (access_time.lo & 0x80000000))
-      || ((unsigned long)saturn.timer2 > access_time.lo))
+  if ((saturn.timer2 >= 0 && (access_time < 0))
+      || ((unsigned long)saturn.timer2 > access_time))
     {
       /*
        * check OK, return calculated time
        */
-      ticks.t2_ticks = access_time.lo;
+      ticks.t2_ticks = access_time;
     }
   else
     {
