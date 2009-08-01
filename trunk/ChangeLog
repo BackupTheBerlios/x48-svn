@@ -1,3 +1,6 @@
+2009-06-31 "G. Allen Morris III" <gam3@gam3.net> release 0.6.1
+        * Fix to XShm to solve the 'LCD' Scramble problem.
+
 2006-04-20 "G. Allen Morris III" <gam3@gam3.net>
 	* Added simple paste feature
 	* Repaired debugger non-readline input 

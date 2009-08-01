@@ -1,3 +1,12 @@
+x48 (0.6.1) unstable; urgency=low
+
+  * Cleaned up the configure.ac file
+    it now fails if X is missing and includes X11 and Xext in X_LIBS
+  * Applied patch for bug ID 015996 (berlios) this should solve the
+    scrambled 'LCD' problem.
+
+ -- G. Allen Morris III <gam3@gam3.net>  Fri, 31 Jul 2009 22:32:55 -0400
+
 x48 (0.6.0) unstable; urgency=low
 
   * Added simple paste feature

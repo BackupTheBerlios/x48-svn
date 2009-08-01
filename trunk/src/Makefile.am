@@ -61,3 +61,5 @@ man1_MANS = x48.man
 EXTRA_DIST = $(man1_MANS)
 
 INCLUDES = $(X_CFLAGS)
+
+x48_LDADD = $(X_LIBS)

@@ -1,5 +1,5 @@
 
-AC_INIT([x48],[0.6.0],[x48-bugs@gam3.net])
+AC_INIT([x48],[0.6.1],[x48-bugs@gam3.net])
 AC_COPYRIGHT([Copyright (c) 2006 G. Allen Morris III])
 AC_CANONICAL_TARGET
 
@@ -14,8 +14,12 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_CPP
 
-AC_PATH_X
 AC_PATH_XTRA
+if test x$no_x = xyes ; then
+  AC_MSG_ERROR([X development libraries not found])
+fi 
+X_LIBS="$X_LIBS -lX11"
+AC_SUBST(X_LIBS)
 
 # ********* readline library
 AC_ARG_ENABLE(readline,
@@ -31,7 +35,6 @@ AC_ARG_ENABLE(readline,
 
 AH_TEMPLATE([HAVE_READLINE],[Define if Readline is used.])
 if test x"$with_readline" != xno; then
-#  $UNSET ac_cv_lib_Xext_XShmQueryExtension
   AC_CHECK_LIB(readline, readline,
                with_readline=yes;
 	       LIBS="$LIBS -lreadline";
@@ -39,10 +42,8 @@ if test x"$with_readline" != xno; then
                with_readline=no;
                problem_readline=": Can't detect readline library.",
                [])
+  AC_CHECK_LIB(history, add_history)
 fi
-
-AC_CHECK_LIB(readline, readline)
-AC_CHECK_LIB(history, add_history)
 
 # ********* MIT Shared Memory Extension
 AC_ARG_ENABLE(shm,
@@ -56,14 +57,18 @@ AC_ARG_ENABLE(shm,
   [ with_shm="not specified, check" ]
 )
 
-AH_TEMPLATE([HAVE_XSHM],[Define if  MIT Shared Memory extension is used.])
+AH_TEMPLATE([HAVE_XSHM],[Define if MIT Shared Memory extension is used.])
 if test x"$with_shm" != xno; then
-#  $UNSET ac_cv_lib_Xext_XShmQueryExtension
+AC_CHECK_HEADER(X11/extensions/XShm.h, [
   AC_CHECK_LIB(Xext, XShmQueryExtension,
                with_shm=yes; AC_DEFINE(HAVE_XSHM),
                with_shm=no;
                problem_shm=": Can't detect MIT Shared Memory ext.",
                [$X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS])
+ ],problem_shm=": Can't detect MIT Shared Memory headers.",[#include <X11/Xlib.h>])
+fi
+if test x$with_shm = xyes ; then
+X_LIBS="$X_LIBS -lXext"
 fi
 
 # Checks for libraries.
@@ -82,7 +87,7 @@ AC_STRUCT_TM
 
 AC_DEFINE_UNQUOTED([VERSION_MAJOR], 0, [The major version])
 AC_DEFINE_UNQUOTED([VERSION_MINOR], 6, [The minor version])
-AC_DEFINE_UNQUOTED([PATCHLEVEL], 0, [The patch level])
+AC_DEFINE_UNQUOTED([PATCHLEVEL], 1, [The patch level])
 
 AC_DEFINE_UNQUOTED([COMPILE_TIME], "`date`", [Date program was compiled])
 AC_DEFINE([COMPILE_BY], ["G. Allen Morris III"], [Name of person that compiled this program])

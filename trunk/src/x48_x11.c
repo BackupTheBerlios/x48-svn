@@ -1202,6 +1202,8 @@ char **argv;
       fprintf(stderr, "%s: Xserver does not support XShm extension.\n",
               progname);
   }
+  if (shm_flag)
+      fprintf(stderr, "%s: using XShm extension.\n", progname);
 #else
   if (useXShm)
     {
@@ -2595,7 +2597,7 @@ CreateDispWindow()
      * create XShmImage for DISP
      */
     disp.disp_image = XShmCreateImage(dpy, None, 1, XYBitmap, NULL,
-                                      &disp.disp_info, 288, 128);
+                                      &disp.disp_info, 262, 128);
     if (disp.disp_image == NULL) {
       shm_flag = 0;
       if (!quiet)
@@ -2641,7 +2643,7 @@ CreateDispWindow()
      * create XShmImage for MENU
      */
     disp.menu_image = XShmCreateImage(dpy, None, 1, XYBitmap, NULL,
-                                      &disp.menu_info, 272, 128);
+                                      &disp.menu_info, 262, 128);
     if (disp.menu_image == NULL) {
       XDestroyImage(disp.disp_image);
       disp.disp_image = NULL;
