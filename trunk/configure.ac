@@ -1,5 +1,5 @@
 
-AC_INIT([x48],[0.6.1],[x48-bugs@gam3.net])
+AC_INIT([x48],[0.6.2],[x48-bugs@gam3.net])
 AC_COPYRIGHT([Copyright (c) 2006 G. Allen Morris III])
 AC_CANONICAL_TARGET
 
@@ -43,6 +43,8 @@ if test x"$with_readline" != xno; then
                problem_readline=": Can't detect readline library.",
                [])
   AC_CHECK_LIB(history, add_history)
+  AC_CHECK_HEADERS([readline/readline.h])
+  AC_CHECK_HEADERS([readline/history.h])
 fi
 
 # ********* MIT Shared Memory Extension
@@ -116,8 +118,8 @@ X48 Configuration:
   Executables: $bindir
   Man pages:   $mandir
 
-  With ReadLine sup. in FvwmConsole?  $with_readline$problem_readline
-  With Shared memory for XImage?      $with_shm$problem_shm
+  With ReadLine sup. in Debuger?  $with_readline$problem_readline
+  With Shared memory for XImage?  $with_shm$problem_shm
 
-See INSTALL.x48 for the description of what this may mean."
+# See INSTALL for the description of what this may mean."
 

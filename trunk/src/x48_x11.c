@@ -3498,8 +3498,6 @@ printf("decode_key %d %c %d\n", buflen, buf[0], sym);
         break;
     }
 
-printf("decode_key (%d) [%c] {%d}\n", buflen, buf[0], sym);
-
   switch ((int)sym) {
     case XK_KP_0:
     case XK_0:
@@ -3815,7 +3813,6 @@ GetEvent()
 
   if (release_pending)
     {
-printf("release_pending\n");
       i = XLookupString (&release_event, buf, bufs, &sym, NULL);
       wake = decode_key ((XEvent *) & release_event, sym, buf, i);
       release_pending = 0;
@@ -3834,7 +3831,6 @@ printf("release_pending\n");
 
 	    case KeyPress:
 
-fprintf(stderr, "ptime %d\n", xev.xkey.time - last_release_time);
 	      if (release_pending)
 		{
 		  printf ("xxx release_pending\n");
@@ -3853,7 +3849,6 @@ fprintf(stderr, "ptime %d\n", xev.xkey.time - last_release_time);
 
 	    case KeyRelease:
 
-fprintf(stderr, "rtime %d\n", xev.xkey.time - last_release_time);
 	      i = XLookupString (&xev.xkey, buf, bufs, &sym, NULL);
 	      printf ("release %d\n", first_key);
 	      first_key = 0;
@@ -4292,7 +4287,7 @@ fprintf(stderr, "rtime %d\n", xev.xkey.time - last_release_time);
 	            }
 		  else
 		    {
-printf("In display %d\n", xev.xbutton.button);
+/* printf("In display %d\n", xev.xbutton.button); */
 		    }
 		}
               else

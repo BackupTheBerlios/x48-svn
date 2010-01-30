@@ -1,3 +1,7 @@
+2010-01-30 "G. Allen Morris III" <gam3@gam3.net> release 0.6.2
+        * remove setlocal code that was causing a bug.
+	* removed some debugging code.
+
 2009-06-31 "G. Allen Morris III" <gam3@gam3.net> release 0.6.1
         * Fix to XShm to solve the 'LCD' Scramble problem.
 

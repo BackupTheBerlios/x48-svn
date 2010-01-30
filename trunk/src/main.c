@@ -154,10 +154,7 @@ char **argv;
   long flags;
   struct itimerval it;
 
-setlocale(LC_CTYPE, "");
-printf("%s\n", setlocale(LC_ALL, NULL));
-printf("%s\n", setlocale(LC_ALL, "en_US.utf8"));
-printf("%s\n", nl_langinfo(CODESET));
+  setlocale(LC_ALL, "C");
 
   name = (char *)0;
   /*
