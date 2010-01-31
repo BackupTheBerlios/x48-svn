@@ -1,8 +1,18 @@
+x48 (0.6.3) unstable; urgency=low
+
+  * update to x48.spec
+  * put debian directory in dist file
+  * install X48 app data in correct place
+    using pkg-config appdefaultdir xt
+  * removed more debugging messages
+
+ -- G. Allen Morris III <gam3@gam3.net>  Sat, 30 Jan 2010 18:16:00 -0500
+
 x48 (0.6.2) unstable; urgency=low
   * Remove some Local code that was causing bug 016244, 016778
   * Removed some debugging code
 
- -- G. Allen Morris III <gam3@gam3.net> Sat, 30 Jan 2010 10:15:43 -0500
+ -- G. Allen Morris III <gam3@gam3.net>  Sat, 30 Jan 2010 10:15:43 -0500
 
 x48 (0.6.1) unstable; urgency=low
 

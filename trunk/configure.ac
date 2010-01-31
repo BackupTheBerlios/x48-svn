@@ -1,6 +1,6 @@
 
-AC_INIT([x48],[0.6.2],[x48-bugs@gam3.net])
-AC_COPYRIGHT([Copyright (c) 2006 G. Allen Morris III])
+AC_INIT([x48],[0.6.3],[x48-bugs@gam3.net])
+AC_COPYRIGHT([Copyright (c) 2006-2010 G. Allen Morris III])
 AC_CANONICAL_TARGET
 
 AC_PREREQ(2.59)
@@ -102,11 +102,20 @@ AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STAT
 AC_CHECK_FUNCS([bzero gethostname gettimeofday memset mkdir select strdup strrchr uname])
 
+PKG_CHECK_MODULES(APPDEFS, xt)
+AC_ARG_WITH([appdefaultdir],
+    [AC_HELP_STRING([--with-appdefaultdir=DIR],
+        [Xt app-defaults directory (default: from pkg-config)])],
+     [appdefaultdir="$withval"],
+     [appdefaultdir=`$PKG_CONFIG --variable=appdefaultdir xt`])
+AC_SUBST(appdefaultdir)
+
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_FILES([Makefile
                  romdump/Makefile
                  src/x48.man
+		 rpm/x48.spec
                  src/Makefile])
 AC_OUTPUT
 

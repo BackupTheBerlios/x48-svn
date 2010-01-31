@@ -3459,8 +3459,6 @@ int     buflen;
 {
   int wake;
 
-printf("decode_key %d %c %d\n", buflen, buf[0], sym);
-
   wake = 0;
   if (buflen == 1)
     switch (buf[0]) {
@@ -3850,7 +3848,6 @@ GetEvent()
 	    case KeyRelease:
 
 	      i = XLookupString (&xev.xkey, buf, bufs, &sym, NULL);
-	      printf ("release %d\n", first_key);
 	      first_key = 0;
 	      release_pending = 1;
 	      last_release_time = xev.xkey.time;
@@ -4336,7 +4333,6 @@ GetEvent()
 		{
 		  if (last_button >= 0)
 		    {
-printf("Button 2 release %d\n", last_button);
 		      button_released (last_button);
 		      DrawButton (last_button);
 		    }

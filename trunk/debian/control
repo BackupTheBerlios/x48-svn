@@ -2,8 +2,8 @@ Source: x48
 Section: x11
 Priority: optional
 Maintainer: G. Allen Morris III <gam3@gam3.net>
-Build-Depends: debhelper (>= 5.0.0)
-Standards-Version: 3.8.3
+Build-Depends: debhelper (>= 5.0.0), libx11-dev, libxext-dev
+Standards-Version: 3.8.2
 
 Package: x48
 Architecture: any

@@ -61,6 +61,7 @@ doc/TODO
 doc/CARDS.doc
 doc/ROMDump.doc
 rpm/x48.spec.in
+rpm/x48.spec
 debian/README.Debian
 debian/changelog
 debian/compat
