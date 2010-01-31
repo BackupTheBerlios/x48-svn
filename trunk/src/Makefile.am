@@ -59,7 +59,7 @@ checkrom_SOURCES = checkrom.c romio.c
 
 man1_MANS = x48.man
 
-EXTRA_DIST = $(man1_MANS)
+EXTRA_DIST = $(man1_MANS) X48.ad
 
 INCLUDES = $(X_CFLAGS)
 

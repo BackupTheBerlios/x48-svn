@@ -142,7 +142,7 @@ set_accesstime()
   ltm = localtime(&gmt);
 #ifdef SYSV_TIME
   systime_offset = timezone;
-  if( daylight )
+  if( ltm->tm_isdst )
     systime_offset -= 3600;
 #else
   systime_offset = -ltm->tm_gmtoff;
