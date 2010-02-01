@@ -2350,9 +2350,7 @@ schedule()
   if ((sched_statistics -= steps) <= 0) {
     sched_statistics = SCHED_STATISTICS;
     run = get_timer(RUN_TIMER);
-#ifdef SIMPLE_64
-#warning bob
-#else
+#ifndef SIMPLE_64
     s_1 = (run.hi << 19) | (run.lo >> 13);
     s_16 = (run.hi << 23) | (run.lo >> 9);
 #endif
