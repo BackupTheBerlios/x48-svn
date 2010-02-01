@@ -3887,7 +3887,7 @@ GetEvent()
 
 	    case KeyPress:
 
-	      if (release_pending)
+	      if (0 && release_pending)
 		{
 		  printf ("xxx release_pending\n");
 		}
