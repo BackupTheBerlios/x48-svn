@@ -90,9 +90,9 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-AC_DEFINE([[VERSION_MAJOR]], VERSION_MAJOR, [The major version number])
-AC_DEFINE([[VERSION_MINOR]], VERSION_MINOR, [The minor version number])
-AC_DEFINE([[PATCHLEVEL]], PATCHLEVEL, [The patch level])
+AC_DEFINE([VERSION_MAJOR], _VERSION_MAJOR, [The major version number])
+AC_DEFINE([VERSION_MINOR], _VERSION_MINOR, [The minor version number])
+AC_DEFINE([PATCHLEVEL], _PATCHLEVEL, [The patch level])
 
 
 AC_DEFINE_UNQUOTED([COMPILE_TIME], "`date`", [Date program was compiled])

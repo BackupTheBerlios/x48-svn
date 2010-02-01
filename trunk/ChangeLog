@@ -1,3 +1,12 @@
+2010-02-01 "G. Allen Morris III" <gam3@gam3.net> release 0.6.3
+        * made updates to x48.spec
+        * put debian directory in dist file
+        * install X48 app data in correct place
+          using pkg-config appdefaultdir xt
+        * removed more debugging messages
+	* added 'netbook' look for small/short screens
+	  use +netbook on the command line
+
 2010-01-30 "G. Allen Morris III" <gam3@gam3.net> release 0.6.2
         * remove setlocal code that was causing a bug.
 	* removed some debugging code.

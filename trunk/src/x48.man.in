@@ -112,6 +112,8 @@ where options include:
     [\-home       <directory>    use directory ~/<directory> to save x48 files
 .br
     [\-xrm        <resource>     set Xresource <resource>
+.br
+    [\-/+netbook                 Enable/Disable netbook look
 
 
 .SH DESCRIPTION
@@ -262,6 +264,8 @@ You can not change the size of \fIx48\fR, but you can set the location of \fIx48
 .TP
 .B *disassemblerMnemonics:
 
+.TP
+.B *Netbook:
 
 .SH COLORS
 The x48 is trying to look like a particular device.
