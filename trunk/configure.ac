@@ -7,7 +7,6 @@ AC_CANONICAL_TARGET
 
 AC_PREREQ(2.59)
 
-
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 
@@ -23,6 +22,8 @@ if test x$no_x = xyes ; then
 fi 
 X_LIBS="$X_LIBS -lX11"
 AC_SUBST(X_LIBS)
+
+PKG_PROG_PKG_CONFIG([0.20])
 
 # ********* readline library
 AC_ARG_ENABLE(readline,
