@@ -93,6 +93,8 @@ static XrmOptionDescRec options[] = {
   { "-disasm",      "*disassemblerMnemonics",XrmoptionSepArg,(void *)  0 },
 
   { "-xrm",         (char *) 0,       XrmoptionResArg,   (void *)      0 },
+  { "-netbook",     "*netbook",       XrmoptionNoArg,    (void *)"False" },
+  { "+netbook",     "*netbook",       XrmoptionNoArg,    (void *) "True" },
 
   /*
    * these are parsed for compatibility, but not used yet.

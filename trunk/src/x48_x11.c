@@ -665,7 +665,7 @@ icon_map_t icon_maps_gx[] = {
 
 #define DISPLAY_WIDTH		(264 + 8)
 #define DISPLAY_HEIGHT		(128 + 16 + 8)
-#define DISPLAY_OFFSET_X	(SIDE_SKIP+(KEYBOARD_WIDTH-DISPLAY_WIDTH)/2)
+#define DISPLAY_OFFSET_X	(SIDE_SKIP+(286-DISPLAY_WIDTH)/2)
 #define DISPLAY_OFFSET_Y	TOP_SKIP
 
 #define DISP_FRAME		8
@@ -1275,16 +1275,18 @@ unsigned int length;
 
 #include <X11/cursorfont.h>
 
-int
+void
 #ifdef __FunctionProto__
-CreateButtons(void)
+CreateButton(int i, int off_x, int off_y, XFontStruct *f_small, XFontStruct *f_med, XFontStruct *f_big )
 #else
-CreateButtons()
+CreateButton(i, off_x, off_y, f_small, f_med, f_big )
+int i, off_x, off_y;
+XFontStruct *f_small, *f_med, *f_big;
 #endif
 {
-  int i, x, y;
+  int x, y;
   XSetWindowAttributes xswa;
-  XFontStruct *finfo, *f_small, *f_med, *f_big;
+  XFontStruct *finfo;
   XGCValues val;
   unsigned long gc_mask;
   Pixmap pix;
@@ -1292,12 +1294,7 @@ CreateButtons()
   int dir, fa, fd;
   unsigned long pixel;
 
-  f_small = get_font_resource(dpy, "smallLabelFont", "SmallLabelFont");
-  f_med = get_font_resource(dpy, "mediumLabelFont", "MediumLabelFont");
-  f_big = get_font_resource(dpy, "largeLabelFont", "LargeLabelFont");
-
-  for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
-
+  {
     if (i < BUTTON_MTH)
       pixel = COLOR(DISP_PAD);
     else
@@ -1312,8 +1309,8 @@ CreateButtons()
      * create the buttons subwindows
      */
     buttons[i].xwin = XCreateSimpleWindow(dpy, mainW,
-			KEYBOARD_OFFSET_X + buttons[i].x,
-			KEYBOARD_OFFSET_Y + buttons[i].y,
+			off_x + buttons[i].x,
+			off_y + buttons[i].y,
 			buttons[i].w, buttons[i].h, 0,
 			COLOR(BLACK), pixel);
 
@@ -1612,14 +1609,10 @@ CreateButtons()
 
   }
 
-  XFreeFont(dpy, f_big);
-  XFreeFont(dpy, f_med);
-  XFreeFont(dpy, f_small);
-
-  return 0;
+  return;
 }
 
-int
+void
 #ifdef __FunctionProto__
 DrawButtons(void)
 #else
@@ -1637,7 +1630,7 @@ DrawButtons()
                 buttons[i].h, 0, 0);
     }
   }
-  return 0;
+  return;
 }
 
 int
@@ -1658,13 +1651,31 @@ int i;
   return 0;
 }
 
-int
+void CreateBackground(int width, int height, int w_top, int h_top, keypad_t *keypad)
+{
+  XSetBackground(dpy, gc, COLOR(PAD));
+  XSetForeground(dpy, gc, COLOR(PAD));
+
+  XFillRectangle(dpy, keypad->pixmap, gc, 0, 0, w_top, h_top);
+
+  XSetBackground(dpy, gc, COLOR(DISP_PAD));
+  XSetForeground(dpy, gc, COLOR(DISP_PAD));
+
+  XFillRectangle(dpy, keypad->pixmap, gc, 0, 0, width, height);
+
+  return;
+}
+
+void
 #ifdef __FunctionProto__
-CreateKeypad(unsigned int w, unsigned int h)
+CreateKeypad(unsigned int w, unsigned int h, unsigned int offset_y, unsigned int offset_x, keypad_t *keypad)
 #else
-CreateKeypad(w, h)
+CreateKeypad(w, h, offset_y, offset_x)
 unsigned int w;
 unsigned int h;
+unsigned int offset_y;
+unsigned int offset_x;
+keypad_t *keypad;
 #endif
 {
   int i, x, y;
@@ -1672,32 +1683,19 @@ unsigned int h;
   Pixmap pix;
   unsigned long pixel;
   unsigned int  pw, ph;
-  int cut;
+  XFontStruct *f_small, *f_med, *f_big;
 
-  /*
-   * draw the nice labels around the buttons
-   */
-  keypad.width = w;
-  keypad.height = h;
 
-  keypad.pixmap = XCreatePixmap(dpy, mainW, w, h, depth);
-
-  XSetBackground(dpy, gc, COLOR(PAD));
-  XSetForeground(dpy, gc, COLOR(PAD));
-
-  XFillRectangle(dpy, keypad.pixmap, gc, 0, 0, w, h);
-
-  XSetBackground(dpy, gc, COLOR(DISP_PAD));
-  XSetForeground(dpy, gc, COLOR(DISP_PAD));
-
-  cut = KEYBOARD_OFFSET_Y + buttons[BUTTON_MTH].y - 19;
-
-  XFillRectangle(dpy, keypad.pixmap, gc, 0, 0, w, (unsigned int)cut);
+  f_small = get_font_resource(dpy, "smallLabelFont", "SmallLabelFont");
+  f_med = get_font_resource(dpy, "mediumLabelFont", "MediumLabelFont");
+  f_big = get_font_resource(dpy, "largeLabelFont", "LargeLabelFont");
 
   /*
    * draw the character labels
    */
   for (i = BUTTON_A; i <= LAST_BUTTON; i++) {
+
+    CreateButton(i, offset_x, offset_y, f_small, f_med, f_big);
 
     if (i < BUTTON_MTH)
       pixel = COLOR(DISP_PAD);
@@ -1711,20 +1709,24 @@ unsigned int h;
 
       if (opt_gx)
         {
-          x = KEYBOARD_OFFSET_X + buttons[i].x + buttons[i].w + 3;
-          y = KEYBOARD_OFFSET_Y + buttons[i].y + buttons[i].h + 1;
+          x = offset_x + buttons[i].x + buttons[i].w + 3;
+          y = offset_y + buttons[i].y + buttons[i].h + 1;
         }
       else
         {
-          x = KEYBOARD_OFFSET_X + buttons[i].x + buttons[i].w -
+          x = offset_x + buttons[i].x + buttons[i].w -
               SmallTextWidth(buttons[i].letter, 1) / 2 + 5;
-          y = KEYBOARD_OFFSET_Y + buttons[i].y + buttons[i].h - 2;
+          y = offset_y + buttons[i].y + buttons[i].h - 2;
         }
 
-      DrawSmallString(dpy, keypad.pixmap, gc, x, y,
+      DrawSmallString(dpy, keypad->pixmap, gc, x, y,
                       buttons[i].letter, 1);
     }
   }
+
+  XFreeFont(dpy, f_big);
+  XFreeFont(dpy, f_med);
+  XFreeFont(dpy, f_small);
 
   /*
    * draw the bottom labels
@@ -1736,11 +1738,11 @@ unsigned int h;
       XSetBackground(dpy, gc, pixel);
       XSetForeground(dpy, gc, COLOR(WHITE));
 
-      x = KEYBOARD_OFFSET_X + buttons[i].x + (1 + buttons[i].w -
+      x = offset_x + buttons[i].x + (1 + buttons[i].w -
           SmallTextWidth(buttons[i].sub, strlen(buttons[i].sub))) / 2;
-      y = KEYBOARD_OFFSET_Y + buttons[i].y + buttons[i].h + small_ascent + 2;
+      y = offset_y + buttons[i].y + buttons[i].h + small_ascent + 2;
 
-      DrawSmallString(dpy, keypad.pixmap, gc, x, y,
+      DrawSmallString(dpy, keypad->pixmap, gc, x, y,
                       buttons[i].sub, strlen(buttons[i].sub));
     }
   }
@@ -1768,7 +1770,7 @@ unsigned int h;
             ph = 11;
           }
 
-	pix = XCreatePixmap(dpy, keypad.pixmap, pw, ph, depth);
+	pix = XCreatePixmap(dpy, keypad->pixmap, pw, ph, depth);
 
         XSetForeground(dpy, gc, COLOR(UNDERLAY));
 
@@ -1799,18 +1801,18 @@ unsigned int h;
 
         if (opt_gx)
           {
-            x = KEYBOARD_OFFSET_X + buttons[i].x - 6;
-            y = KEYBOARD_OFFSET_Y + buttons[i].y
+            x = offset_x + buttons[i].x - 6;
+            y = offset_y + buttons[i].y
                 - small_ascent - small_descent - 6;
           }
         else
           {
-            x = KEYBOARD_OFFSET_X + buttons[i].x + (buttons[i].w - pw) / 2;
-            y = KEYBOARD_OFFSET_Y + buttons[i].y
+            x = offset_x + buttons[i].x + (buttons[i].w - pw) / 2;
+            y = offset_y + buttons[i].y
                 - small_ascent - small_descent;
           }
 
-        XCopyArea(dpy, pix, keypad.pixmap, gc, 0, 0, pw, ph, x, y);
+        XCopyArea(dpy, pix, keypad->pixmap, gc, 0, 0, pw, ph, x, y);
 
 	XFreePixmap(dpy, pix);
 
@@ -1821,7 +1823,7 @@ unsigned int h;
 
         if (buttons[i].right == (char *)0) {	/* centered label */
 
-          x = KEYBOARD_OFFSET_X + buttons[i].x + (1 + buttons[i].w -
+          x = offset_x + buttons[i].x + (1 + buttons[i].w -
               SmallTextWidth(buttons[i].left,
                              strlen(buttons[i].left))) / 2;
 
@@ -1831,14 +1833,14 @@ unsigned int h;
 	  wr = SmallTextWidth(buttons[i].right, strlen(buttons[i].right));
 	  ws = SmallTextWidth(" ", 1);
 
-          x = KEYBOARD_OFFSET_X + buttons[i].x + (1 + buttons[i].w -
+          x = offset_x + buttons[i].x + (1 + buttons[i].w -
               (wl + wr + ws)) / 2;
 
         }
 
-        y = KEYBOARD_OFFSET_Y + buttons[i].y - small_descent;
+        y = offset_y + buttons[i].y - small_descent;
 
-        DrawSmallString(dpy, keypad.pixmap, gc, x, y,
+        DrawSmallString(dpy, keypad->pixmap, gc, x, y,
                         buttons[i].left, strlen(buttons[i].left));
       }
     }
@@ -1872,7 +1874,7 @@ unsigned int h;
             ph = 9;
           }
 
-        pix = XCreatePixmap(dpy, keypad.pixmap, pw, ph, depth);
+        pix = XCreatePixmap(dpy, keypad->pixmap, pw, ph, depth);
 
         XSetForeground(dpy, gc, COLOR(UNDERLAY));
 
@@ -1903,18 +1905,18 @@ unsigned int h;
 
         if (opt_gx)
           {
-            x = KEYBOARD_OFFSET_X + buttons[i].x - 6;
-            y = KEYBOARD_OFFSET_Y + buttons[i].y
+            x = offset_x + buttons[i].x - 6;
+            y = offset_y + buttons[i].y
                 - small_ascent - small_descent - 6;
           }
         else
           {
-            x = KEYBOARD_OFFSET_X + buttons[i].x + (buttons[i].w - pw) / 2;
-            y = KEYBOARD_OFFSET_Y + buttons[i].y
+            x = offset_x + buttons[i].x + (buttons[i].w - pw) / 2;
+            y = offset_y + buttons[i].y
                 - small_ascent - small_descent;
           }
 
-        XCopyArea(dpy, pix, keypad.pixmap, gc, 0, 0, pw, ph, x, y);
+        XCopyArea(dpy, pix, keypad->pixmap, gc, 0, 0, pw, ph, x, y);
 
 	XFreePixmap(dpy, pix);
 
@@ -1925,7 +1927,7 @@ unsigned int h;
 
         if (buttons[i].left == (char *)0) {	/* centered label */
 
-          x = KEYBOARD_OFFSET_X + buttons[i].x + (1 + buttons[i].w -
+          x = offset_x + buttons[i].x + (1 + buttons[i].w -
               SmallTextWidth(buttons[i].right,
                              strlen(buttons[i].right))) / 2;
 
@@ -1935,14 +1937,14 @@ unsigned int h;
 	  wr = SmallTextWidth(buttons[i].right, strlen(buttons[i].right));
 	  ws = SmallTextWidth(" ", 1);
 
-          x = KEYBOARD_OFFSET_X + buttons[i].x + (1 + buttons[i].w -
+          x = offset_x + buttons[i].x + (1 + buttons[i].w -
               (wl + wr + ws)) / 2 + wl + ws;
 
         }
 
-        y = KEYBOARD_OFFSET_Y + buttons[i].y - small_descent;
+        y = offset_y + buttons[i].y - small_descent;
 
-        DrawSmallString(dpy, keypad.pixmap, gc, x, y,
+        DrawSmallString(dpy, keypad->pixmap, gc, x, y,
                         buttons[i].right, strlen(buttons[i].right));
       }
     }
@@ -1957,56 +1959,66 @@ unsigned int h;
       XSetBackground(dpy, gc, COLOR(PAD));
       XSetForeground(dpy, gc, COLOR(WHITE));
 
-      pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)last_bits,
+      pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)last_bits,
 			          last_width, last_height);
 
-      x = KEYBOARD_OFFSET_X + buttons[BUTTON_1].x + buttons[BUTTON_1].w +
+      x = offset_x + buttons[BUTTON_1].x + buttons[BUTTON_1].w +
           (buttons[BUTTON_2].x - buttons[BUTTON_1].x - buttons[BUTTON_1].w) / 2;
-      y = KEYBOARD_OFFSET_Y + buttons[BUTTON_5].y + buttons[BUTTON_5].h + 2;
+      y = offset_y + buttons[BUTTON_5].y + buttons[BUTTON_5].h + 2;
 
-      XCopyPlane(dpy, pix, keypad.pixmap, gc, 0, 0, last_width, last_height,
+      XCopyPlane(dpy, pix, keypad->pixmap, gc, 0, 0, last_width, last_height,
 	         x, y, 1);
 
       XFreePixmap(dpy, pix);
     }
 
+  return;
+}
+
+void
+CreateBezel(unsigned int width, unsigned int height, unsigned int offset_y, unsigned int offset_x, keypad_t *keypad)
+{
+  int i, x, y;
+  Pixmap pix;
+  int display_height = DISPLAY_HEIGHT;
+  int display_width  = DISPLAY_WIDTH;
+
   /*
    * draw the frame around the display
    */
-
   XSetForeground(dpy, gc, COLOR(DISP_PAD_TOP));
 
   for (i = 0; i < DISP_FRAME; i++) {
-    XDrawLine(dpy, keypad.pixmap, gc,
+    XDrawLine(dpy, keypad->pixmap, gc,
               (int)(DISPLAY_OFFSET_X - i),
-              (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * i),
-              (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + i),
-              (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * i));
-    XDrawLine(dpy, keypad.pixmap, gc,
+              (int)(DISPLAY_OFFSET_Y + display_height + 2 * i),
+              (int)(DISPLAY_OFFSET_X + display_width + i),
+              (int)(DISPLAY_OFFSET_Y + display_height + 2 * i));
+    XDrawLine(dpy, keypad->pixmap, gc,
               (int)(DISPLAY_OFFSET_X - i),
-              (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * i + 1),
-              (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + i),
-              (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * i + 1));
-    XDrawLine(dpy, keypad.pixmap, gc,
-	      (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + i),
+              (int)(DISPLAY_OFFSET_Y + display_height + 2 * i + 1),
+              (int)(DISPLAY_OFFSET_X + display_width + i),
+              (int)(DISPLAY_OFFSET_Y + display_height + 2 * i + 1));
+    XDrawLine(dpy, keypad->pixmap, gc,
+	      (int)(DISPLAY_OFFSET_X + display_width + i),
 	      (int)(DISPLAY_OFFSET_Y - i),
-	      (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + i),
-	      (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * i));
+	      (int)(DISPLAY_OFFSET_X + display_width + i),
+	      (int)(DISPLAY_OFFSET_Y + display_height + 2 * i));
   }
 
   XSetForeground(dpy, gc, COLOR(DISP_PAD_BOT));
 
   for (i = 0; i < DISP_FRAME; i++) {
-    XDrawLine(dpy, keypad.pixmap, gc,
+    XDrawLine(dpy, keypad->pixmap, gc,
               (int)(DISPLAY_OFFSET_X - i - 1),
               (int)(DISPLAY_OFFSET_Y - i - 1),
-              (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + i - 1),
+              (int)(DISPLAY_OFFSET_X + display_width + i - 1),
               (int)(DISPLAY_OFFSET_Y - i - 1));
-    XDrawLine(dpy, keypad.pixmap, gc,
+    XDrawLine(dpy, keypad->pixmap, gc,
 	      (int)(DISPLAY_OFFSET_X - i - 1),
 	      (int)(DISPLAY_OFFSET_Y - i - 1),
 	      (int)(DISPLAY_OFFSET_X - i - 1),
-	      (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * i - 1));
+	      (int)(DISPLAY_OFFSET_Y + display_height + 2 * i - 1));
   }
 
   /*
@@ -2014,128 +2026,141 @@ unsigned int h;
    */
   XSetForeground(dpy, gc, COLOR(DISP_PAD));
 
-  XDrawLine(dpy, keypad.pixmap, gc,
+  XDrawLine(dpy, keypad->pixmap, gc,
             (int)(DISPLAY_OFFSET_X - DISP_FRAME),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME),
 	    (int)(DISPLAY_OFFSET_X - DISP_FRAME + 3),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME));
-  XDrawLine(dpy, keypad.pixmap, gc,
+  XDrawLine(dpy, keypad->pixmap, gc,
             (int)(DISPLAY_OFFSET_X - DISP_FRAME),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME),
 	    (int)(DISPLAY_OFFSET_X - DISP_FRAME),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME + 3));
-  XDrawPoint(dpy, keypad.pixmap, gc,
+  XDrawPoint(dpy, keypad->pixmap, gc,
 	     (int)(DISPLAY_OFFSET_X - DISP_FRAME + 1),
 	     (int)(DISPLAY_OFFSET_Y - DISP_FRAME + 1));
 
-  XDrawLine(dpy, keypad.pixmap, gc,
-            (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 4),
+  XDrawLine(dpy, keypad->pixmap, gc,
+            (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 4),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME),
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 1),
+	    (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 1),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME));
-  XDrawLine(dpy, keypad.pixmap, gc,
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 1),
+  XDrawLine(dpy, keypad->pixmap, gc,
+	    (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 1),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME),
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 1),
+	    (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 1),
 	    (int)(DISPLAY_OFFSET_Y - DISP_FRAME + 3));
-  XDrawPoint(dpy, keypad.pixmap, gc,
-	     (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 2),
+  XDrawPoint(dpy, keypad->pixmap, gc,
+	     (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 2),
 	     (int)(DISPLAY_OFFSET_Y - DISP_FRAME + 1));
 
-  XDrawLine(dpy, keypad.pixmap, gc,
+  XDrawLine(dpy, keypad->pixmap, gc,
             (int)(DISPLAY_OFFSET_X - DISP_FRAME),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 4),
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 4),
 	    (int)(DISPLAY_OFFSET_X - DISP_FRAME),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 1));
-  XDrawLine(dpy, keypad.pixmap, gc,
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 1));
+  XDrawLine(dpy, keypad->pixmap, gc,
             (int)(DISPLAY_OFFSET_X - DISP_FRAME),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 1),
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 1),
 	    (int)(DISPLAY_OFFSET_X - DISP_FRAME + 3),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 1));
-  XDrawPoint(dpy, keypad.pixmap, gc,
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 1));
+  XDrawPoint(dpy, keypad->pixmap, gc,
 	     (int)(DISPLAY_OFFSET_X - DISP_FRAME + 1),
-	     (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 2));
+	     (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 2));
 
-  XDrawLine(dpy, keypad.pixmap, gc,
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 1),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 4),
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 1),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 1));
-  XDrawLine(dpy, keypad.pixmap, gc,
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 4),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 1),
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 1),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 1));
-  XDrawPoint(dpy, keypad.pixmap, gc,
-	     (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH + DISP_FRAME - 2),
-	     (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + 2 * DISP_FRAME - 2));
+  XDrawLine(dpy, keypad->pixmap, gc,
+	    (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 1),
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 4),
+	    (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 1),
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 1));
+  XDrawLine(dpy, keypad->pixmap, gc,
+	    (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 4),
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 1),
+	    (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 1),
+	    (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 1));
+  XDrawPoint(dpy, keypad->pixmap, gc,
+	     (int)(DISPLAY_OFFSET_X + display_width + DISP_FRAME - 2),
+	     (int)(DISPLAY_OFFSET_Y + display_height + 2 * DISP_FRAME - 2));
 
   /*
    * simulate rounded lcd corners
    */
   XSetForeground(dpy, gc, COLOR(LCD));
 
-  XDrawLine(dpy, keypad.pixmap, gc,
+  XDrawLine(dpy, keypad->pixmap, gc,
             (int)(DISPLAY_OFFSET_X - 1),
 	    (int)(DISPLAY_OFFSET_Y + 1),
             (int)(DISPLAY_OFFSET_X - 1),
-            (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT - 2));
-  XDrawLine(dpy, keypad.pixmap, gc,
+            (int)(DISPLAY_OFFSET_Y + display_height - 2));
+  XDrawLine(dpy, keypad->pixmap, gc,
             (int)(DISPLAY_OFFSET_X + 1),
 	    (int)(DISPLAY_OFFSET_Y - 1),
-            (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH - 2),
+            (int)(DISPLAY_OFFSET_X + display_width - 2),
             (int)(DISPLAY_OFFSET_Y - 1));
-  XDrawLine(dpy, keypad.pixmap, gc,
+  XDrawLine(dpy, keypad->pixmap, gc,
             (int)(DISPLAY_OFFSET_X + 1),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT),
-	    (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH - 2),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT));
-  XDrawLine(dpy, keypad.pixmap, gc,
-            (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH),
+	    (int)(DISPLAY_OFFSET_Y + display_height),
+	    (int)(DISPLAY_OFFSET_X + display_width - 2),
+	    (int)(DISPLAY_OFFSET_Y + display_height));
+  XDrawLine(dpy, keypad->pixmap, gc,
+            (int)(DISPLAY_OFFSET_X + display_width),
 	    (int)(DISPLAY_OFFSET_Y + 1),
-            (int)(DISPLAY_OFFSET_X + DISPLAY_WIDTH),
-	    (int)(DISPLAY_OFFSET_Y + DISPLAY_HEIGHT - 2));
+            (int)(DISPLAY_OFFSET_X + display_width),
+	    (int)(DISPLAY_OFFSET_Y + display_height - 2));
 
+  return;
+}
+
+void
+DrawMore(unsigned int w, unsigned int h, unsigned int offset_y, unsigned int offset_x, keypad_t *keypad)
+{
+  Pixmap pix;
+  int cut;
+  int x, y;
+
+  int display_height = DISPLAY_HEIGHT;
+  int display_width  = DISPLAY_WIDTH;
   /*
    * lower the whole thing
    */
   XSetForeground(dpy, gc, COLOR(PAD_TOP));
 
   /* bottom lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 1, (int)(keypad.height - 1),
-	    (int)(keypad.width - 1), (int)(keypad.height - 1));
-  XDrawLine(dpy, keypad.pixmap, gc, 2, (int)(keypad.height - 2),
-	    (int)(keypad.width - 2), (int)(keypad.height - 2));
+  int keypad_width = keypad->width;
+  XDrawLine(dpy, keypad->pixmap, gc, 1, (int)(keypad->height - 1),
+	    (int)(keypad_width - 1), (int)(keypad->height - 1));
+  XDrawLine(dpy, keypad->pixmap, gc, 2, (int)(keypad->height - 2),
+	    (int)(keypad_width - 2), (int)(keypad->height - 2));
 
   /* right lines */
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 1),
-	    (int)(keypad.height - 1), (int)(keypad.width - 1), cut);
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 2),
-	    (int)(keypad.height - 2), (int)(keypad.width - 2), cut);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 1),
+	    (int)(keypad->height - 1), (int)(keypad->width - 1), cut);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 2),
+	    (int)(keypad->height - 2), (int)(keypad->width - 2), cut);
 
   XSetForeground(dpy, gc, COLOR(DISP_PAD_TOP));
 
   /* right lines */
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 1),
-	    cut - 1, (int)(keypad.width - 1), 1);
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 2),
-	    cut - 1, (int)(keypad.width - 2), 2);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 1),
+	    cut - 1, (int)(keypad->width - 1), 1);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 2),
+	    cut - 1, (int)(keypad->width - 2), 2);
 
   XSetForeground(dpy, gc, COLOR(DISP_PAD_BOT));
 
   /* top lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 0, 0, (int)(keypad.width - 2), 0);
-  XDrawLine(dpy, keypad.pixmap, gc, 1, 1, (int)(keypad.width - 3), 1);
+  XDrawLine(dpy, keypad->pixmap, gc, 0, 0, (int)(keypad->width - 2), 0);
+  XDrawLine(dpy, keypad->pixmap, gc, 1, 1, (int)(keypad->width - 3), 1);
 
   /* left lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 0, cut - 1, 0, 0);
-  XDrawLine(dpy, keypad.pixmap, gc, 1, cut - 1, 1, 1);
+  XDrawLine(dpy, keypad->pixmap, gc, 0, cut - 1, 0, 0);
+  XDrawLine(dpy, keypad->pixmap, gc, 1, cut - 1, 1, 1);
 
   XSetForeground(dpy, gc, COLOR(PAD_BOT));
 
   /* left lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 0, (int)(keypad.height - 2), 0, cut);
-  XDrawLine(dpy, keypad.pixmap, gc, 1, (int)(keypad.height - 3), 1, cut);
+  XDrawLine(dpy, keypad->pixmap, gc, 0, (int)(keypad->height - 2), 0, cut);
+  XDrawLine(dpy, keypad->pixmap, gc, 1, (int)(keypad->height - 3), 1, cut);
 
   /*
    * lower the menu buttons
@@ -2143,42 +2168,42 @@ unsigned int h;
   XSetForeground(dpy, gc, COLOR(PAD_TOP));
 
   /* bottom lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 3, (int)(keypad.height - 3),
-	    (int)(keypad.width - 3), (int)(keypad.height - 3));
-  XDrawLine(dpy, keypad.pixmap, gc, 4, (int)(keypad.height - 4),
-	    (int)(keypad.width - 4), (int)(keypad.height - 4));
+  XDrawLine(dpy, keypad->pixmap, gc, 3, (int)(keypad->height - 3),
+	    (int)(keypad->width - 3), (int)(keypad->height - 3));
+  XDrawLine(dpy, keypad->pixmap, gc, 4, (int)(keypad->height - 4),
+	    (int)(keypad->width - 4), (int)(keypad->height - 4));
 
   /* right lines */
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 3),
-	    (int)(keypad.height - 3), (int)(keypad.width - 3), cut);
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 4),
-	    (int)(keypad.height - 4), (int)(keypad.width - 4), cut);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 3),
+	    (int)(keypad->height - 3), (int)(keypad->width - 3), cut);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 4),
+	    (int)(keypad->height - 4), (int)(keypad->width - 4), cut);
 
   XSetForeground(dpy, gc, COLOR(DISP_PAD_TOP));
 
   /* right lines */
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 3),
-	    cut - 1, (int)(keypad.width - 3), KEYBOARD_OFFSET_Y - 24);
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 4),
-	    cut - 1, (int)(keypad.width - 4), KEYBOARD_OFFSET_Y - 23);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 3),
+	    cut - 1, (int)(keypad->width - 3), offset_y - 24);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 4),
+	    cut - 1, (int)(keypad->width - 4), offset_y - 23);
 
   XSetForeground(dpy, gc, COLOR(DISP_PAD_BOT));
 
   /* top lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 2, KEYBOARD_OFFSET_Y - 25,
-            (int)(keypad.width - 4), KEYBOARD_OFFSET_Y - 25);
-  XDrawLine(dpy, keypad.pixmap, gc, 3, KEYBOARD_OFFSET_Y - 24,
-            (int)(keypad.width - 5), KEYBOARD_OFFSET_Y - 24);
+  XDrawLine(dpy, keypad->pixmap, gc, 2, offset_y - 25,
+            (int)(keypad->width - 4), offset_y - 25);
+  XDrawLine(dpy, keypad->pixmap, gc, 3, offset_y - 24,
+            (int)(keypad->width - 5), offset_y - 24);
 
   /* left lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 2, cut - 1, 2, KEYBOARD_OFFSET_Y - 24);
-  XDrawLine(dpy, keypad.pixmap, gc, 3, cut - 1, 3, KEYBOARD_OFFSET_Y - 23);
+  XDrawLine(dpy, keypad->pixmap, gc, 2, cut - 1, 2, offset_y - 24);
+  XDrawLine(dpy, keypad->pixmap, gc, 3, cut - 1, 3, offset_y - 23);
 
   XSetForeground(dpy, gc, COLOR(PAD_BOT));
 
   /* left lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 2, (int)(keypad.height - 4), 2, cut);
-  XDrawLine(dpy, keypad.pixmap, gc, 3, (int)(keypad.height - 5), 3, cut);
+  XDrawLine(dpy, keypad->pixmap, gc, 2, (int)(keypad->height - 4), 2, cut);
+  XDrawLine(dpy, keypad->pixmap, gc, 3, (int)(keypad->height - 5), 3, cut);
 
   /*
    * lower the keyboard
@@ -2186,60 +2211,60 @@ unsigned int h;
   XSetForeground(dpy, gc, COLOR(PAD_TOP));
 
   /* bottom lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 5, (int)(keypad.height - 5),
-	    (int)(keypad.width - 3), (int)(keypad.height - 5));
-  XDrawLine(dpy, keypad.pixmap, gc, 6, (int)(keypad.height - 6),
-	    (int)(keypad.width - 4), (int)(keypad.height - 6));
+  XDrawLine(dpy, keypad->pixmap, gc, 5, (int)(keypad->height - 5),
+	    (int)(keypad->width - 3), (int)(keypad->height - 5));
+  XDrawLine(dpy, keypad->pixmap, gc, 6, (int)(keypad->height - 6),
+	    (int)(keypad->width - 4), (int)(keypad->height - 6));
 
   /* right lines */
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 5),
-	    (int)(keypad.height - 5), (int)(keypad.width - 5), cut + 1);
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 6),
-	    (int)(keypad.height - 6), (int)(keypad.width - 6), cut + 2);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 5),
+	    (int)(keypad->height - 5), (int)(keypad->width - 5), cut + 1);
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 6),
+	    (int)(keypad->height - 6), (int)(keypad->width - 6), cut + 2);
 
   XSetForeground(dpy, gc, COLOR(DISP_PAD_BOT));
 
   /* top lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 4, cut,
-            (int)(keypad.width - 6), cut);
-  XDrawLine(dpy, keypad.pixmap, gc, 5, cut + 1,
-            (int)(keypad.width - 7), cut + 1);
+  XDrawLine(dpy, keypad->pixmap, gc, 4, cut,
+            (int)(keypad->width - 6), cut);
+  XDrawLine(dpy, keypad->pixmap, gc, 5, cut + 1,
+            (int)(keypad->width - 7), cut + 1);
 
   XSetForeground(dpy, gc, COLOR(PAD_BOT));
 
   /* left lines */
-  XDrawLine(dpy, keypad.pixmap, gc, 4, (int)(keypad.height - 6), 4, cut + 1);
-  XDrawLine(dpy, keypad.pixmap, gc, 5, (int)(keypad.height - 7), 5, cut + 2);
+  XDrawLine(dpy, keypad->pixmap, gc, 4, (int)(keypad->height - 6), 4, cut + 1);
+  XDrawLine(dpy, keypad->pixmap, gc, 5, (int)(keypad->height - 7), 5, cut + 2);
 
   /*
    * round off the bottom edge
    */
   XSetForeground(dpy, gc, COLOR(PAD_TOP));
 
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 7),
-            (int)(keypad.height - 7), (int)(keypad.width - 7),
-            (int)(keypad.height - 14));
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 8),
-            (int)(keypad.height - 8), (int)(keypad.width - 8),
-            (int)(keypad.height - 11));
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 7),
-            (int)(keypad.height - 7), (int)(keypad.width - 14),
-            (int)(keypad.height - 7));
-  XDrawLine(dpy, keypad.pixmap, gc, (int)(keypad.width - 7),
-            (int)(keypad.height - 8), (int)(keypad.width - 11),
-            (int)(keypad.height - 8));
-  XDrawPoint(dpy, keypad.pixmap, gc,
-             (int)(keypad.width - 9), (int)(keypad.height - 9));
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 7),
+            (int)(keypad->height - 7), (int)(keypad->width - 7),
+            (int)(keypad->height - 14));
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 8),
+            (int)(keypad->height - 8), (int)(keypad->width - 8),
+            (int)(keypad->height - 11));
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 7),
+            (int)(keypad->height - 7), (int)(keypad->width - 14),
+            (int)(keypad->height - 7));
+  XDrawLine(dpy, keypad->pixmap, gc, (int)(keypad->width - 7),
+            (int)(keypad->height - 8), (int)(keypad->width - 11),
+            (int)(keypad->height - 8));
+  XDrawPoint(dpy, keypad->pixmap, gc,
+             (int)(keypad->width - 9), (int)(keypad->height - 9));
 
-  XDrawLine(dpy, keypad.pixmap, gc, 7, (int)(keypad.height - 7), 13,
-            (int)(keypad.height - 7));
-  XDrawLine(dpy, keypad.pixmap, gc, 8, (int)(keypad.height - 8), 10,
-            (int)(keypad.height - 8));
+  XDrawLine(dpy, keypad->pixmap, gc, 7, (int)(keypad->height - 7), 13,
+            (int)(keypad->height - 7));
+  XDrawLine(dpy, keypad->pixmap, gc, 8, (int)(keypad->height - 8), 10,
+            (int)(keypad->height - 8));
   XSetForeground(dpy, gc, COLOR(PAD_BOT));
-  XDrawLine(dpy, keypad.pixmap, gc, 6, (int)(keypad.height - 8), 6,
-            (int)(keypad.height - 14));
-  XDrawLine(dpy, keypad.pixmap, gc, 7, (int)(keypad.height - 9), 7,
-            (int)(keypad.height - 11));
+  XDrawLine(dpy, keypad->pixmap, gc, 6, (int)(keypad->height - 8), 6,
+            (int)(keypad->height - 14));
+  XDrawLine(dpy, keypad->pixmap, gc, 7, (int)(keypad->height - 9), 7,
+            (int)(keypad->height - 11));
 
   /*
    * insert the HP Logo
@@ -2248,7 +2273,7 @@ unsigned int h;
   XSetBackground(dpy, gc, COLOR(LOGO_BACK));
   XSetForeground(dpy, gc, COLOR(LOGO));
 
-  pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)hp_bits,
+  pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)hp_bits,
                               hp_width, hp_height);
 
   if (opt_gx)
@@ -2256,7 +2281,7 @@ unsigned int h;
   else
     x = DISPLAY_OFFSET_X;
 
-  XCopyPlane(dpy, pix, keypad.pixmap, gc, 0, 0, hp_width, hp_height,
+  XCopyPlane(dpy, pix, keypad->pixmap, gc, 0, 0, hp_width, hp_height,
              x, 10, 1);
 
   XFreePixmap(dpy, pix);
@@ -2265,13 +2290,13 @@ unsigned int h;
     {
       XSetForeground(dpy, gc, COLOR(FRAME));
 
-      XDrawLine(dpy, keypad.pixmap, gc, (int)DISPLAY_OFFSET_X, 9,
+      XDrawLine(dpy, keypad->pixmap, gc, (int)DISPLAY_OFFSET_X, 9,
                 (int)(DISPLAY_OFFSET_X + hp_width - 1), 9);
-      XDrawLine(dpy, keypad.pixmap, gc, (int)(DISPLAY_OFFSET_X - 1), 10,
+      XDrawLine(dpy, keypad->pixmap, gc, (int)(DISPLAY_OFFSET_X - 1), 10,
                 (int)(DISPLAY_OFFSET_X - 1), 10 + hp_height - 1);
-      XDrawLine(dpy, keypad.pixmap, gc, (int)DISPLAY_OFFSET_X, 10 + hp_height,
+      XDrawLine(dpy, keypad->pixmap, gc, (int)DISPLAY_OFFSET_X, 10 + hp_height,
 	        (int)(DISPLAY_OFFSET_X + hp_width - 1), 10 + hp_height);
-      XDrawLine(dpy, keypad.pixmap, gc, (int)(DISPLAY_OFFSET_X + hp_width), 10,
+      XDrawLine(dpy, keypad->pixmap, gc, (int)(DISPLAY_OFFSET_X + hp_width), 10,
 	        (int)(DISPLAY_OFFSET_X + hp_width), 10 + hp_height - 1);
     }
 
@@ -2283,21 +2308,21 @@ unsigned int h;
 
   if (opt_gx)
     {
-      x = DISPLAY_OFFSET_X + DISPLAY_WIDTH - gx_128K_ram_width
+      x = DISPLAY_OFFSET_X + display_width - gx_128K_ram_width
           + gx_128K_ram_x_hot + 2;
       y = 10 + gx_128K_ram_y_hot;
-      pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)gx_128K_ram_bits,
+      pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)gx_128K_ram_bits,
                                   gx_128K_ram_width, gx_128K_ram_height);
-      XCopyPlane(dpy, pix, keypad.pixmap, gc, 0, 0, gx_128K_ram_width,
+      XCopyPlane(dpy, pix, keypad->pixmap, gc, 0, 0, gx_128K_ram_width,
                  gx_128K_ram_height, x, y, 1);
       XFreePixmap(dpy, pix);
 
       XSetForeground(dpy, gc, COLOR(LOGO));
       x = DISPLAY_OFFSET_X + hp_width;
       y = hp_height + 8 - hp48gx_height;
-      pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)hp48gx_bits,
+      pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)hp48gx_bits,
                                   hp48gx_width, hp48gx_height);
-      XCopyPlane(dpy, pix, keypad.pixmap, gc, 0, 0, hp48gx_width,
+      XCopyPlane(dpy, pix, keypad->pixmap, gc, 0, 0, hp48gx_width,
                  hp48gx_height, x, y, 1);
       XFreePixmap(dpy, pix);
 
@@ -2305,23 +2330,23 @@ unsigned int h;
       x = DISPLAY_OFFSET_X + DISPLAY_WIDTH - gx_128K_ram_width
           + gx_silver_x_hot + 2;
       y = 10 + gx_silver_y_hot;
-      pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)gx_silver_bits,
+      pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)gx_silver_bits,
                                   gx_silver_width, gx_silver_height);
       XSetStipple(dpy, gc, pix);
       XSetTSOrigin(dpy, gc, x, y);
-      XFillRectangle(dpy, keypad.pixmap, gc, x, y, gx_silver_width,
+      XFillRectangle(dpy, keypad->pixmap, gc, x, y, gx_silver_width,
                      gx_silver_height);
       XFreePixmap(dpy, pix);
 
       XSetForeground(dpy, gc, COLOR(RIGHT));
-      x = DISPLAY_OFFSET_X + DISPLAY_WIDTH - gx_128K_ram_width
+      x = DISPLAY_OFFSET_X + display_width - gx_128K_ram_width
           + gx_green_x_hot + 2;
       y = 10 + gx_green_y_hot;
-      pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)gx_green_bits,
+      pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)gx_green_bits,
                                   gx_green_width, gx_green_height);
       XSetStipple(dpy, gc, pix);
       XSetTSOrigin(dpy, gc, x, y);
-      XFillRectangle(dpy, keypad.pixmap, gc, x, y, gx_green_width,
+      XFillRectangle(dpy, keypad->pixmap, gc, x, y, gx_green_width,
                      gx_green_height);
       XFreePixmap(dpy, pix);
 
@@ -2333,43 +2358,44 @@ unsigned int h;
       x = DISPLAY_OFFSET_X;
       y = TOP_SKIP - DISP_FRAME - hp48sx_height - 3;
 
-      pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)hp48sx_bits,
+      pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)hp48sx_bits,
                                   hp48sx_width, hp48sx_height);
 
-      XCopyPlane(dpy, pix, keypad.pixmap, gc, 0, 0, hp48sx_width,
+      XCopyPlane(dpy, pix, keypad->pixmap, gc, 0, 0, hp48sx_width,
                  hp48sx_height, x, y, 1);
 
       XFreePixmap(dpy, pix);
 
-      x = DISPLAY_OFFSET_X + DISPLAY_WIDTH - 1 - science_width;
+      x = DISPLAY_OFFSET_X + display_width - 1 - science_width;
       y = TOP_SKIP - DISP_FRAME - science_height - 4;
 
-      pix = XCreateBitmapFromData(dpy, keypad.pixmap, (char *)science_bits,
+      pix = XCreateBitmapFromData(dpy, keypad->pixmap, (char *)science_bits,
                                   science_width, science_height);
 
-      XCopyPlane(dpy, pix, keypad.pixmap, gc, 0, 0, science_width,
+      XCopyPlane(dpy, pix, keypad->pixmap, gc, 0, 0, science_width,
                  science_height, x, y, 1);
     }
 
   /*
    * that's it. Ooph.
    */
-  return 0;
+  return;
 }
 
-int
+void
 #ifdef __FunctionProto__
-DrawKeypad(void)
+DrawKeypad(keypad_t *keypad)
 #else
 DrawKeypad()
+keypad_t *keypad;
 #endif
 {
-  XCopyArea(dpy, keypad.pixmap, mainW, gc, 0, 0, keypad.width,
-            keypad.height, 0, 0);
-  return 0;
+  XCopyArea(dpy, keypad->pixmap, mainW, gc, 0, 0, keypad->width,
+            keypad->height, 0, 0);
+  return;
 }
 
-int
+void
 #ifdef __FunctionProto__
 CreateIcon(void)
 #else
@@ -2427,7 +2453,6 @@ CreateIcon()
       XSetForeground(dpy, gc, COLOR(BLACK));
       XDrawRectangle(dpy, icon_pix, gc, 0, 0, icon_maps[ICON_MAP].w - 1,
                      icon_maps[ICON_MAP].h - 1);
-
     }
 
   /*
@@ -2462,7 +2487,7 @@ CreateIcon()
                  icon_maps[ON_MAP].w, icon_maps[ON_MAP].h);
   XSetFillStyle(dpy, gc, FillSolid);
 
-  return 0;
+  return;
 }
 
 void
@@ -2509,11 +2534,14 @@ refresh_icon()
                      icon_maps[DISP_MAP].w, icon_maps[DISP_MAP].h);
     }
   XSetFillStyle(dpy, gc, FillSolid);
-  XCopyArea(dpy, icon_pix, iconW, gc, 0, 0,
-            hp48_icon_width, hp48_icon_height, 0, 0);
+  if (iconW)
+    {
+      XCopyArea(dpy, icon_pix, iconW, gc, 0, 0,
+                hp48_icon_width, hp48_icon_height, 0, 0);
+    }
 }
 
-int
+void
 #ifdef __FunctionProto__
 DrawIcon(void)
 #else
@@ -2522,7 +2550,7 @@ DrawIcon()
 {
   XCopyArea(dpy, icon_pix, iconW, gc, 0, 0,
             hp48_icon_width, hp48_icon_height, 0, 0);
-  return 0;
+  return;
 }
 
 #ifdef HAVE_XSHM
@@ -2540,7 +2568,7 @@ XErrorEvent *eev;
 }
 #endif
 
-int
+void
 #ifdef __FunctionProto__
 CreateDispWindow(void)
 #else
@@ -2736,7 +2764,7 @@ CreateDispWindow()
   }
 #endif
 
-  return 0;
+  return;
 }
 
 int
@@ -2774,6 +2802,18 @@ char **argv;
       colors = colors_sx;
       icon_maps = icon_maps_sx;
     }
+  
+  if (netbook) {
+      int i;
+      for (i = 0; i < 6; i++) {
+          buttons[i].x -= 3;
+          buttons[i].y += 300;
+      }
+      for (; i <= LAST_BUTTON; i++) {
+          buttons[i].x += 317;
+          buttons[i].y -= 3;
+      }
+  }
 
   class = InputOutput;
   visual = get_visual_resource(dpy, "visual", "Visual", &depth);
@@ -2850,8 +2890,11 @@ char **argv;
    * create the window
    */
   width = KEYBOARD_WIDTH + 2 * SIDE_SKIP;
-  height = DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + DISP_KBD_SKIP +
-           KEYBOARD_HEIGHT + BOTTOM_SKIP;
+  if (netbook) {
+      height = KEYBOARD_HEIGHT;
+  } else {
+      height = DISPLAY_OFFSET_Y + DISPLAY_HEIGHT + DISP_KBD_SKIP + KEYBOARD_HEIGHT + BOTTOM_SKIP;
+  }
 
   mainW = XCreateWindow(dpy, RootWindow(dpy, screen),
                         0, 0, width, height,
@@ -2999,7 +3042,7 @@ char **argv;
   gc = XCreateGC(dpy, mainW, gc_mask, &val);
 
   /*
-   * create the icon pixmap
+   * create the icon pixmap for desktops
    */
   CreateIcon();
 
@@ -3009,14 +3052,30 @@ char **argv;
   CreateDispWindow();
 
   /*
-   * create the buttons
-   */
-  CreateButtons();
-
-  /*
    * create the keypad
    */
-  CreateKeypad(width, height);
+  /*
+   * draw the nice labels around the buttons
+   */
+  keypad.width = width;
+  keypad.height = height;
+
+  keypad.pixmap = XCreatePixmap(dpy, mainW, width, height, depth);
+
+
+  if (netbook) {
+      int cut = buttons[BUTTON_MTH].y - (small_ascent + small_descent + 6 + 4);
+      CreateBackground(width/2, height, width, height, &keypad);
+      DrawMore(width, height, KEYBOARD_OFFSET_Y, KEYBOARD_OFFSET_X, &keypad);
+      CreateBezel(width/2, height, KEYBOARD_OFFSET_Y, KEYBOARD_OFFSET_X, &keypad);
+      CreateKeypad(width, height, -cut, KEYBOARD_OFFSET_X, &keypad);
+  } else {
+      int cut = buttons[BUTTON_MTH].y + KEYBOARD_OFFSET_Y - 19;
+      CreateBackground(width, cut, width, height, &keypad);
+      DrawMore(width, height, KEYBOARD_OFFSET_Y, KEYBOARD_OFFSET_X, &keypad);
+      CreateBezel(width, cut, KEYBOARD_OFFSET_Y, KEYBOARD_OFFSET_X, &keypad);
+      CreateKeypad(width, height, KEYBOARD_OFFSET_Y, KEYBOARD_OFFSET_X, &keypad);
+  }
 
   /*
    * map the window
@@ -3024,7 +3083,7 @@ char **argv;
   XMapWindow(dpy, mainW);
   XMapSubwindows(dpy, mainW);
 
-  DrawKeypad();
+  DrawKeypad(&keypad);
   DrawButtons();
   DrawIcon();
 
@@ -3068,7 +3127,7 @@ char *ir;
   w = DISPLAY_WIDTH;
   h = fa + fd;
 
-  pix = XCreatePixmap(dpy, keypad.pixmap, w, h, depth);
+  pix = XCreatePixmap(dpy, keypad.pixmap, w, h, depth);		/* FIXME keypad? */
   XSetForeground(dpy, gc, COLOR(DISP_PAD));
   XFillRectangle(dpy, pix, gc, 0, 0, w, h);
 
@@ -3089,9 +3148,9 @@ char *ir;
 
   x = DISPLAY_OFFSET_X;
   y = conn_top;
-  XCopyArea(dpy, pix, keypad.pixmap, gc, 0, 0, w, h, x, y);
+  XCopyArea(dpy, pix, keypad.pixmap, gc, 0, 0, w, h, x, y);	/* FIXME keypad? */
 
-  DrawKeypad();
+  DrawKeypad(&keypad);
 
   XFreePixmap(dpy, pix);
   XFreeFont(dpy, finfo);
@@ -3793,7 +3852,6 @@ GetEvent()
   static XKeyEvent release_event;
   static Time last_release_time = 0;
 
-
   wake = 0;
   if (paste_last_key)
     {
@@ -3872,7 +3930,7 @@ GetEvent()
 		    }
 		  else if (xev.xexpose.window == mainW)
 		    {
-		      DrawKeypad ();
+		      DrawKeypad(&keypad);
 		    }
 		  else
 		    for (i = BUTTON_A; i <= LAST_BUTTON; i++)
@@ -4401,3 +4459,4 @@ GetEvent()
   return wake;
 }
 
+/* eof */

@@ -68,6 +68,7 @@ int     useSerial;
 char   *serialLine;
 int     useXShm;
 int     useDebugger;
+int	netbook;
 int     initialize;
 int     resetOnStartup;
 char   *romFileName;
@@ -106,6 +107,8 @@ get_resources()
   useDebugger = get_boolean_resource("useDebugger", "UseDebugger");
   disassembler_mode = get_mnemonic_resource("disassemblerMnemonics",
                                             "DisassemblerMnemonics");
+
+  netbook = get_boolean_resource("netbook", "Netbook");
 }
 
 char *

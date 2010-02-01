@@ -654,7 +654,7 @@ do_shutdown()
             }
         }
 
-      if (saturn.timer1 < 0)
+      if (saturn.timer1 <= 0)
         {
           saturn.timer1 &= 0x0f;
           if (saturn.t1_ctrl & 0x04)

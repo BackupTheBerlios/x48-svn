@@ -47,6 +47,7 @@ extern int     useTerminal;
 extern int     useSerial;
 extern int     useXShm;
 extern int     useDebugger;
+extern int     netbook;
 extern char   *serialLine;
 extern int     initialize;
 extern int     resetOnStartup;

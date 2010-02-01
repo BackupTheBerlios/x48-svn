@@ -1,9 +1,12 @@
 
-AC_INIT([x48],[0.6.3],[x48-bugs@gam3.net])
+m4_include([version.m4])
+AC_INIT([x48],[VERSION_NUMBER],[x48-bugs@gam3.net])
+
 AC_COPYRIGHT([Copyright (c) 2006-2010 G. Allen Morris III])
 AC_CANONICAL_TARGET
 
 AC_PREREQ(2.59)
+
 
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
@@ -87,9 +90,10 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-AC_DEFINE_UNQUOTED([VERSION_MAJOR], 0, [The major version])
-AC_DEFINE_UNQUOTED([VERSION_MINOR], 6, [The minor version])
-AC_DEFINE_UNQUOTED([PATCHLEVEL], 1, [The patch level])
+AC_DEFINE([[VERSION_MAJOR]], VERSION_MAJOR, [The major version number])
+AC_DEFINE([[VERSION_MINOR]], VERSION_MINOR, [The minor version number])
+AC_DEFINE([[PATCHLEVEL]], PATCHLEVEL, [The patch level])
+
 
 AC_DEFINE_UNQUOTED([COMPILE_TIME], "`date`", [Date program was compiled])
 AC_DEFINE([COMPILE_BY], ["G. Allen Morris III"], [Name of person that compiled this program])
