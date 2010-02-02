@@ -140,7 +140,7 @@ set_accesstime()
    */
   (void)time(&gmt);
   ltm = localtime(&gmt);
-#ifdef SYSV_TIME
+#if defined(SYSV_TIME) || defined(__sgi)
   systime_offset = timezone;
   if( ltm->tm_isdst )
     systime_offset -= 3600;
