@@ -4401,6 +4401,7 @@ GetEvent()
 
 	    case FocusOut:
 	      first_key = 0;
+	      button_release_all();
 	      break;
 
 	    case MappingNotify:
