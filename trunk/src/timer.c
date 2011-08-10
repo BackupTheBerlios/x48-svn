@@ -509,7 +509,7 @@ get_t1_t2()
     {
       set_0_time += adj_time;
       time_offset += adj_time;
-      access_time - adj_time;
+      access_time -= adj_time;
   
 #ifdef DEBUG_TIMER_ADJUST
       fprintf(stderr, "Time adjusted by ");
