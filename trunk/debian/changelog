@@ -1,3 +1,13 @@
+x48 (0.6.4) unstable; urgency=low
+
+  * Default to throttling speed only when key-pressed
+  * Add throttle switch for speed emulation
+  * Fix buffer overflow bug
+  * release keys on loss of focus
+  * typo in access_time adjust
+
+ -- G. Allen Morris III <gam3@gam3.net>  Tue, 09 Aug 2011 22:43:23 -0700
+
 x48 (0.6.3) unstable; urgency=low
 
   * update to x48.spec
