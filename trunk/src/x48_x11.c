@@ -4399,6 +4399,10 @@ GetEvent()
 		}
 	      break;
 
+	    case FocusOut:
+	      first_key = 0;
+	      break;
+
 	    case MappingNotify:
 
 	      switch (xev.xmapping.request)
