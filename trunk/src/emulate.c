@@ -55,6 +55,8 @@
 #include "x48_x11.h"
 #include "debugger.h"
 
+extern int throttle;
+
 #if 0
 #define DEBUG_TIMER
 #define DEBUG_SCHED 1
@@ -2451,17 +2453,27 @@ emulate()
   do {
     step_instruction();
 
+    {
+      int i;
+      for (i=0;
+           i < sizeof(saturn.keybuf.rows)/sizeof(saturn.keybuf.rows[0]);
+	   i++) {
+        if (saturn.keybuf.rows[i] || throttle) {
 #ifdef SOLARIS
-    gettimeofday(&tv);
+          gettimeofday(&tv);
 #else
-    gettimeofday(&tv, &tz);
+          gettimeofday(&tv, &tz);
 #endif
-    while ((tv.tv_sec == tv2.tv_sec) && ((tv.tv_usec - tv2.tv_usec) < 2)) {
-	gettimeofday(&tv, &tz);
-    }
+          while ((tv.tv_sec == tv2.tv_sec) && ((tv.tv_usec - tv2.tv_usec) < 2)) {
+	    gettimeofday(&tv, &tz);
+          }
 
-    tv2.tv_usec = tv.tv_usec;
-    tv2.tv_sec = tv.tv_sec;
+          tv2.tv_usec = tv.tv_usec;
+          tv2.tv_sec = tv.tv_sec;
+	  break;
+	}
+      }
+    }
 
 /* We need to throttle the speed here. */
 

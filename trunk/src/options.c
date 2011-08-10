@@ -94,6 +94,8 @@ where options include:\n\
     -rom        <filename>       if initializing, read ROM from <filename>\n\
     -home       <directory>      use directory ~/<directory> to save x48 files\n\
     -xrm        <resource>       set Xresource <resource>\n\
+    -/+throttle			 turn off/on speed emulation\n\
+    -/+netbook			 turn off/on netbook layout\n\
 \n", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL, progname);
 
   fflush(stdout);

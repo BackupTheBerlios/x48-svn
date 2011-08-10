@@ -69,6 +69,7 @@ char   *serialLine;
 int     useXShm;
 int     useDebugger;
 int	netbook;
+int	throttle;
 int     initialize;
 int     resetOnStartup;
 char   *romFileName;
@@ -109,6 +110,8 @@ get_resources()
                                             "DisassemblerMnemonics");
 
   netbook = get_boolean_resource("netbook", "Netbook");
+
+  throttle = get_boolean_resource("throttle", "Throttle");
 }
 
 char *
