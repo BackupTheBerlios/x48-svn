@@ -2953,7 +2953,7 @@ char **argv;
   xswa.bit_gravity = NorthWestGravity;
   xswa.event_mask = KeyPressMask | KeyReleaseMask | ButtonPressMask |
                     ButtonReleaseMask | ExposureMask | KeymapStateMask |
-                    EnterWindowMask | StructureNotifyMask;
+                    EnterWindowMask | StructureNotifyMask | FocusChangeMask;
   mask = CWBackPixel | CWBorderPixel | CWBackingStore | CWEventMask |
          CWBitGravity | CWWinGravity;
   XChangeWindowAttributes(dpy, mainW, mask, &xswa);
