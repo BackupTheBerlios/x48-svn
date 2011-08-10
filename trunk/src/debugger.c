@@ -1919,10 +1919,7 @@ debug ()
 	      free (cl);
               cl = (char *) 0;
             }
-	  if (old_line)
-	    cl = strcpy ((char *) malloc (strlen (old_line)), old_line);
-	  else
-	    cl = strcpy ((char *) malloc (strlen ("(null)")), "(null)");
+	  cl = strdup (old_line == NULL ? "(null)" : old_line);
 	}
       else
 	{
