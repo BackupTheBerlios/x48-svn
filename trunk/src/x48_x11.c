@@ -3639,6 +3639,7 @@ int     buflen;
       wake = 1;
       break;
     case XK_KP_Decimal:
+    case XK_KP_Separator:
     case XK_period:
       key_event(BUTTON_PERIOD, xev);
       wake = 1;
