@@ -17,7 +17,7 @@ AC_PROG_LN_S
 AC_PROG_CPP
 
 AC_PATH_XTRA
-if test x$no_x = xyes ; then
+if test x"$no_x" = xyes ; then
   AC_MSG_ERROR([X development libraries not found])
 fi 
 X_LIBS="$X_LIBS -lX11"
@@ -73,7 +73,7 @@ AC_CHECK_HEADER(X11/extensions/XShm.h, [
                [$X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS])
  ],problem_shm=": Can't detect MIT Shared Memory headers.",[#include <X11/Xlib.h>])
 fi
-if test x$with_shm = xyes ; then
+if test x"$with_shm" = xyes ; then
 X_LIBS="$X_LIBS -lXext"
 fi
 
